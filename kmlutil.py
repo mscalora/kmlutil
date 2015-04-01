@@ -17,6 +17,9 @@ placemark_type_xpath = \
     ur'.//*[local-name()="Placemark" and *[local-name()="%s"]]'
 folder_by_name = \
     ur'.//*[local-name()="Folder" and *[local-name()="name" and text()="%s"]]'
+folder_or_placemark_by_name = \
+    ur'.//*[(local-name()="Folder" or local-name()="Placemark") and *[local-name()="name" and text()="%s"]]'
+
 
 from util import *
 import json
@@ -410,6 +413,21 @@ def count_points(element):
     return count
 
 
+def delete_node(doc, names):
+
+    for name in names:
+
+        q = folder_or_placemark_by_name % name;
+        fnodes = doc.xpath(q)
+
+        if args.verbose > 1:
+            print("Deleteing %d item(s) named '%s'" % (len(fnodes), name), file=out_diag)
+
+        for node in reversed(list(fnodes)):
+            parent = node.xpath('./..')[0]
+            parent.remove(node)
+
+
 def doc_stats(doc, points=False):
     """
     calculate statistics for the specified document
@@ -503,7 +521,8 @@ def dump_line(kml_doc, line_name, out_list=sys.stdout):
     for el in kml_doc.xpath(all_placemarks):
         placemark = Placemark(el, kml_doc)
         print(placemark.get_name(), file=out_list)
-        if line_name==placemark.get_name():
+        #is_line_string =
+        if line_name=='-' or line_name==placemark.get_name():
             for point in placemark.coordinates:
                 print(','.join(point.astype(unicode)), file=out_list)
 
@@ -617,7 +636,8 @@ def dump_namespace_table(namespaces_dict, outfile=sys.stdout, prefix_title='Pref
             raise NotImplemented("namespace table format of '%s' not implemented" % table_format)
 
 
-all_placemark_paths = '//*[local-name()="Placemark" and *[local-name()="LineString"]]'
+all_placemark_paths_old = '//*[local-name()="Placemark" and *[local-name()="LineString"]]'
+all_placemark_paths = '//*[local-name()="Placemark" and (*[local-name()="LineString"] or *[local-name()="MultiGeometry" and *[local-name()="LineString"]])]'
 all_placemarks = '//*[local-name()="Placemark"]'
 
 
@@ -663,6 +683,9 @@ def process(options):
         if v1: print("PROGRESS: recording 'before' statistics", file=out_diag)
         pre_stats = doc_stats(kml_doc)
         pre_stats_points = doc_stats(kml_doc, points=True)
+
+    if args.delete:
+        delete_node(kml_doc, args.delete)
 
     if args.serialize_names:
         i = 0
