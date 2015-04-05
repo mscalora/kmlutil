@@ -3,6 +3,7 @@
 from __future__ import print_function
 import os
 import re
+import sys
 import operator
 from math import radians, cos, sin, asin, sqrt
 from pykml import parser as kmlparser
@@ -19,7 +20,8 @@ folder_by_name = \
     ur'.//*[local-name()="Folder" and *[local-name()="name" and text()="%s"]]'
 folder_or_placemark_by_name = \
     ur'.//*[(local-name()="Folder" or local-name()="Placemark") and *[local-name()="name" and text()="%s"]]'
-
+top_level_folder_or_placemarks = \
+    ur'/*/*[local-name()="Document"]/*[local-name()="Folder" or local-name()="Placemark"]'
 
 from util import *
 import json
@@ -49,7 +51,9 @@ defaults = AttrDict({
     'list_detail': False,
     'folderize': False,
     'folderize_limit': 0.35,
-    'serialize_names': False
+    'serialize_names': False,
+    'delete_styles': False,
+    'paths_only': False,
 })
 
 args = None
@@ -68,6 +72,7 @@ alias_map = {
 
 all_polygon_names = '//*[local-name()="Placemark" and *[local-name()="Polygon"]]/*[local-name()="name"]/text()'
 all_elementX_names = '//*[local-name()="Placemark" and *[local-name()="%s"]]/*[local-name()="name"]/text()'
+all_style_data = '//*[local-name()="Style" or local-name()="StyleMap"]|//*[local-name()="Placemark"]/*[local-name()="styleUrl"]'
 
 
 class KMLError(Exception):
@@ -423,9 +428,34 @@ def delete_node(doc, names):
         if args.verbose > 1:
             print("Deleteing %d item(s) named '%s'" % (len(fnodes), name), file=out_diag)
 
-        for node in reversed(list(fnodes)):
+        for node in reversed(fnodes):
             parent = node.xpath('./..')[0]
             parent.remove(node)
+
+def paths_only(doc):
+    paths = doc.xpath(all_placemark_paths)
+
+    if args.verbose > 1:
+            print("Located %d paths" % len(paths), file=out_diag)
+
+    all_top_level = doc.xpath(top_level_folder_or_placemarks)
+
+    for node in reversed(all_top_level):
+        node.xpath('./..')[0].remove(node)
+
+    document_element = doc.xpath(ur'/*/*[local-name()="Document"]')[0]
+
+    for path in paths:
+        document_element.append(path)
+
+def remove_all_styles(doc):
+    nodes = doc.xpath(all_style_data)
+
+    if args.verbose > 1:
+            print("Deleteing %d style related item(s)" % len(nodes), file=out_diag)
+
+    for node in reversed(nodes):
+        node.xpath('./..')[0].remove(node)
 
 
 def doc_stats(doc, points=False):
@@ -525,6 +555,7 @@ def dump_line(kml_doc, line_name, out_list=sys.stdout):
         if line_name=='-' or line_name==placemark.get_name():
             for point in placemark.coordinates:
                 print(','.join(point.astype(unicode)), file=out_list)
+
 
 def print_list(doc, filter_list, tree=False, list_format='text', out_list=sys.stdout):
 
@@ -674,7 +705,24 @@ def process(options):
     v4 = args.verbose >= 4
     v5 = args.verbose >= 5
 
-    kml_et = kmlparser.parse(args.kmlfile)
+    kml_et = None
+    try:
+        kml_et = kmlparser.parse(args.kmlfile)
+
+    except ET.XMLSyntaxError, e:
+        print("ERROR: an xml parsing error was encountered while interpreting input kml data, unable to continue", file=out_diag)
+        print("MESSAGE: %s" % e.message, file=out_diag)
+        if v3:
+            raise
+        sys.exit(5)
+
+    except IOError, e:
+        print("ERROR: an I/O error was encountered while reading input, unable to continue", file=out_diag)
+        print("MESSAGE: %s" % e.message, file=out_diag)
+        if v3:
+            raise
+        sys.exit(10)
+
     kml_doc = kml_et.getroot()
     pre_stats = None
     pre_stats_points = {}
@@ -684,8 +732,14 @@ def process(options):
         pre_stats = doc_stats(kml_doc)
         pre_stats_points = doc_stats(kml_doc, points=True)
 
+    if args.paths_only:
+        paths_only(kml_doc)
+
     if args.delete:
         delete_node(kml_doc, args.delete)
+
+    if args.delete_styles:
+        remove_all_styles(kml_doc)
 
     if args.serialize_names:
         i = 0
