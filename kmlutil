@@ -12,6 +12,8 @@ defaults = kmlutil.defaults
 parser = argparse.ArgumentParser(epilog="""Notes:
 For the purposes of list and tree filtering, "Path" is used as an alias for kml Placemarks with a "LineString" geometry
 and "Point", "Waypoint" and "Placemark" are all aliases for kml Placemarks with a "Point" geometry
+
+** option may be used more than once for multiple values
 """)
 #argcomplete.autocomplete(parser)
 
@@ -64,11 +66,13 @@ parser.add_argument("--serialize-names", action="store_true",
 parser.add_argument("-d", "--dump-line", action="store", default=None,
                     help="name of LineString/Path to dump")
 parser.add_argument("--delete", action="append", default=[],
-                    help="name(s) of Folder or Placemark to delete")
+                    help="name(s) of Folder or Placemark to delete **")
 parser.add_argument("--delete-styles", action="store_true",
                     help="delete all style data")
 parser.add_argument("--paths-only", action="store_true",
                     help="keep only Paths")
+parser.add_argument("--extract-by-name", action="append", default=[],
+                    help="name(s) of Folder(s) or Placemark(s) to keep, all other's will be deleted **")
 
 args = parser.parse_args()
 

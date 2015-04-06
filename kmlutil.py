@@ -432,6 +432,36 @@ def delete_node(doc, names):
             parent = node.xpath('./..')[0]
             parent.remove(node)
 
+
+def extract_by_names(doc, names):
+
+    all = []
+    all_ids = {}
+
+    for name in names:
+
+        q = folder_or_placemark_by_name % name;
+        fnodes = doc.xpath(q)
+
+        for node in fnodes:
+            if id(node) not in all_ids:
+                all_ids[id(node)] = True
+                all.append(node)
+
+    if args.verbose > 1:
+            print("Located %d features to extract" % len(all), file=out_diag)
+
+    all_top_level = doc.xpath(top_level_folder_or_placemarks)
+
+    for node in reversed(all_top_level):
+        node.xpath('./..')[0].remove(node)
+
+    document_element = doc.xpath(ur'/*/*[local-name()="Document"]')[0]
+
+    for feature in all:
+        document_element.append(feature)
+
+
 def paths_only(doc):
     paths = doc.xpath(all_placemark_paths)
 
@@ -732,6 +762,9 @@ def process(options):
         pre_stats = doc_stats(kml_doc)
         pre_stats_points = doc_stats(kml_doc, points=True)
 
+    if (args.extract_by_name):
+        extract_by_names(kml_doc, args.extract_by_name)
+
     if args.paths_only:
         paths_only(kml_doc)
 
@@ -819,10 +852,11 @@ def process(options):
         path_types = []
         after = doc_stats(kml_doc)
         max_len = 0
-        if args.stats_format == 'text':
-            print("=== Element Count ===", file=out_stats)
         for key in pre_stats.iterkeys():
             max_len = len(key) if len(key) > max_len else max_len
+        if args.stats_format == 'text':
+            print("=== Counts by Element Type ===")
+            print((" {0:>%ds} {1:>7} {2:>7}  {3}" % max_len).format("Element","Input","Output","Delta"), file=out_stats)
         line_format = " {0:>%ds} {1:>7} {2:>7}{3:8.2%%}" % max_len
         for e in sorted(pre_stats.iteritems(), key=operator.itemgetter(1), reverse=True):
             f = after[e[0]] if e[0] in after else 0
@@ -837,10 +871,12 @@ def process(options):
             else:
                 print(line_format.format(e[0], e[1], f, p), file=out_stats)
 
-        if args.optimize_paths:
+        if args.optimize_paths or args.stats_detail:
             after_points = doc_stats(kml_doc, points=True)
             if args.stats_format == 'text':
-                print("=== Element Point Count ===", file=out_stats)
+                print("")
+                print("=== Coordinate Point Count by Element Type ===", file=out_stats)
+                print((" {0:>%ds} {1:>7} {2:>7}  {3}" % max_len).format("Element","Input","Output","Delta"), file=out_stats)
             for e in sorted(pre_stats_points.iteritems(), key=operator.itemgetter(1), reverse=True):
                 if e[0] and int(e[1]):
                     f = after_points[e[0]] if e[0] in after_points else 0
@@ -855,6 +891,10 @@ def process(options):
                         })
                     else:
                         print(line_format.format(e[0], e[1], f, p), file=out_stats)
+
+        if args.stats_format == 'text':
+            print("")
+            print("=== Path Style Counts === <normal-color>-<size>-<highlight-color>-<size>", file=out_stats)
 
         path_type_map = get_path_stats(kml_doc)
         for sig, count in path_type_map.iteritems():
