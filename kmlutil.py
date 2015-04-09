@@ -587,6 +587,15 @@ def dump_line(kml_doc, line_name, out_list=sys.stdout):
                 print(','.join(point.astype(unicode)), file=out_list)
 
 
+class filteringAttrDictEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, attrdict.AttrDict):
+            d = dict(obj)
+            d.pop('el', None)
+            return d
+        return json.JSONEncoder.default(self, obj)
+
+
 def print_list(doc, filter_list, tree=False, list_format='text', out_list=sys.stdout):
 
     # map filter alias to real kml terms
@@ -609,7 +618,7 @@ def print_list(doc, filter_list, tree=False, list_format='text', out_list=sys.st
 
     node_list = lister(root, mapped_filter, tree=True, children_only=False)
     if list_format == 'json':
-        json.dump(node_list, out_list, indent=2 if args.pretty_print else None, cls=attrDictEncoder)
+        json.dump(node_list, out_list, indent=2 if args.pretty_print else None, cls=filteringAttrDictEncoder)
     else:
         name_len = 0
         type_len = 0
