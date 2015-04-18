@@ -54,6 +54,9 @@ defaults = AttrDict({
     'serialize_names': False,
     'delete_styles': False,
     'paths_only': False,
+    'dump': [],
+    'extract': [],
+    'delete': [],
 })
 
 args = None
@@ -249,23 +252,35 @@ class Placemark:
             if high_el is None:
                 print("Style id not found: '%s'" % high_id, file=out_diag)
                 return None, None, None, None
-            if (norm_el.countchildren() != 1 or
-                    high_el.countchildren() != 1 or
-                    norm_el.getchildren()[0].tag[-9:] != "LineStyle" or
-                    high_el.getchildren()[0].tag[-9:] != "LineStyle"):
+            style_map_parts = norm_el.xpath('.//*[local-name()="LineStyle"]/*[local-name()="color"]/text()')
+            style_map_parts += norm_el.xpath('.//*[local-name()="LineStyle"]/*[local-name()="width"]/text()')
+            style_map_parts +=  high_el.xpath('.//*[local-name()="LineStyle"]/*[local-name()="color"]/text()')
+            style_map_parts +=  high_el.xpath('.//*[local-name()="LineStyle"]/*[local-name()="width"]/text()')
+            if len(style_map_parts)!=4:
                 return None, None, None, None
-            style_map_parts = norm_el.xpath('*/*/text()') + high_el.xpath('*/*/text()')
+
             if args.verbose > 3:
-                print("StyleMap:", style_map_id, file=out_diag)
-                print("  Normal:",
-                      norm_el.tag.split('}')[-1], norm_el.attrib['id'] if 'id' in norm_el.attrib else '',
-                      norm_el.countchildren(), norm_el.getchildren()[0].tag.split('}')[-1],
-                      style_map_parts[0:len(style_map_parts) / 2], file=out_diag)
-                print("  Highlight:",
-                      high_el.tag.split('}')[-1], high_el.attrib['id'] if 'id' in high_el.attrib else '',
-                      high_el.countchildren(), high_el.getchildren()[0].tag.split('}')[-1],
-                      style_map_parts[-len(style_map_parts) / 2:], file=out_diag)
+                print("StyleMap:", style_map_id, '-'.join(style_map_parts),file=out_diag)
+
             return style_map_parts, style_map_id, norm_id, high_id
+
+            # if (norm_el.countchildren() != 1 or
+            #         high_el.countchildren() != 1 or
+            #         norm_el.getchildren()[0].tag[-9:] != "LineStyle" or
+            #         high_el.getchildren()[0].tag[-9:] != "LineStyle"):
+            #     return None, None, None, None
+            # style_map_parts = norm_el.xpath('*/*/text()') + high_el.xpath('*/*/text()')
+            # if args.verbose > 3:
+            #     print("StyleMap:", style_map_id, file=out_diag)
+            #     print("  Normal:",
+            #           norm_el.tag.split('}')[-1], norm_el.attrib['id'] if 'id' in norm_el.attrib else '',
+            #           norm_el.countchildren(), norm_el.getchildren()[0].tag.split('}')[-1],
+            #           style_map_parts[0:len(style_map_parts) / 2], file=out_diag)
+            #     print("  Highlight:",
+            #           high_el.tag.split('}')[-1], high_el.attrib['id'] if 'id' in high_el.attrib else '',
+            #           high_el.countchildren(), high_el.getchildren()[0].tag.split('}')[-1],
+            #           style_map_parts[-len(style_map_parts) / 2:], file=out_diag)
+            # return style_map_parts, style_map_id, norm_id, high_id
         except KMLError:
             pass
         except IndexError:
@@ -418,35 +433,24 @@ def count_points(element):
     return count
 
 
-def delete_node(doc, names):
+def delete_nodes(doc, kml_ids):
 
-    for name in names:
+    nodes = list_nodes(doc, kml_ids)
 
-        q = folder_or_placemark_by_name % name;
-        fnodes = doc.xpath(q)
+    print("Deleteing %d item(s)" % len(nodes), file=out_diag)
+
+    for node in reversed(nodes):
 
         if args.verbose > 1:
             print("Deleteing %d item(s) named '%s'" % (len(fnodes), name), file=out_diag)
 
-        for node in reversed(fnodes):
-            parent = node.xpath('./..')[0]
-            parent.remove(node)
+        parent = node.xpath('./..')[0]
+        parent.remove(node)
 
 
-def extract_by_names(doc, names):
+def extract_nodes(doc, kml_ids):
 
-    all = []
-    all_ids = {}
-
-    for name in names:
-
-        q = folder_or_placemark_by_name % name;
-        fnodes = doc.xpath(q)
-
-        for node in fnodes:
-            if id(node) not in all_ids:
-                all_ids[id(node)] = True
-                all.append(node)
+    nodes = list_nodes(doc, kml_ids)
 
     if args.verbose > 1:
             print("Located %d features to extract" % len(all), file=out_diag)
@@ -458,8 +462,8 @@ def extract_by_names(doc, names):
 
     document_element = doc.xpath(ur'/*/*[local-name()="Document"]')[0]
 
-    for feature in all:
-        document_element.append(feature)
+    for node in nodes:
+        document_element.append(node)
 
 
 def paths_only(doc):
@@ -576,15 +580,48 @@ def list_type_mapper(unmapped_type):
     return alias_map[unmapped_type][0] if unmapped_type in alias_map else unmapped_type
 
 
-def dump_line(kml_doc, line_name, out_list=sys.stdout):
-    print(line_name, file=out_list)
-    for el in kml_doc.xpath(all_placemarks):
-        placemark = Placemark(el, kml_doc)
-        print(placemark.get_name(), file=out_list)
-        #is_line_string =
-        if line_name=='-' or line_name==placemark.get_name():
-            for point in placemark.coordinates:
-                print(','.join(point.astype(unicode)), file=out_list)
+def kml_id_to_xpath(kml_id):
+
+    if kml_id.startswith(('.','/')):
+        return kml_id
+    elif kml_id.startswith('&'):
+        return folder_or_placemark_by_name % kml_id[1:]
+
+    return folder_or_placemark_by_name % kml_id
+
+
+def list_nodes(doc, kml_ids):
+    xpaths = []
+    if isinstance(kml_ids,list):
+        xpaths  = map(kml_id_to_xpath,kml_ids)
+        # for kml_id in kml_ids:
+        #     xpaths.append(kml_id_to_xpath(kml_ids))
+    else:
+        xpaths = [kml_id_to_xpath(kml_ids)]
+
+    nodes = doc.xpath('|'.join(xpaths))
+    return nodes
+
+def dump(kml_doc, line_name, out_list=sys.stdout):
+
+    node_list = list_nodes(kml_doc, line_name)
+
+    for node in node_list:
+        placemark = Placemark(node, kml_doc)
+        if (args.verbose):
+            name = placemark.get_name()
+            print("# %s" % "<unnamed>" if name is None else name, file=out_diag)
+        for point in placemark.coordinates:
+            print(u','.join(map(unicode, point)), file=out_list)
+
+    # print(line_name, file=out_list)
+    # for el in kml_doc.xpath(all_placemarks):
+    #     placemark = Placemark(el, kml_doc)
+    #     print(placemark.get_name(), file=out_list)
+    #     #is_line_string =
+    #     if line_name=='-' or line_name==placemark.get_name():
+    #         for point in placemark.coordinates:
+    #             print(','.join(point.astype(unicode)), file=out_list)
 
 
 class filteringAttrDictEncoder(json.JSONEncoder):
@@ -596,7 +633,7 @@ class filteringAttrDictEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def print_list(doc, filter_list, tree=False, list_format='text', out_list=sys.stdout):
+def print_list(doc, filter_list, tree=False, xpaths=False, list_format='text', out_list=sys.stdout):
 
     # map filter alias to real kml terms
     mapped_filter = filter_list
@@ -617,9 +654,17 @@ def print_list(doc, filter_list, tree=False, list_format='text', out_list=sys.st
         raise KMLError("Unsupported document root")
 
     node_list = lister(root, mapped_filter, tree=True, children_only=False)
+    etree = ET.ElementTree(doc) if xpaths else None
+
     if list_format == 'json':
+
+        if xpaths:
+            for node in node_list:
+                node.xpath = etree.getpath(node.el)
         json.dump(node_list, out_list, indent=2 if args.pretty_print else None, cls=filteringAttrDictEncoder)
+
     else:
+
         name_len = 0
         type_len = 0
         for node in node_list:
@@ -628,13 +673,25 @@ def print_list(doc, filter_list, tree=False, list_format='text', out_list=sys.st
             type_len = len(node.type) if len(node.type) > type_len else type_len
 
         line = "{name:<{name_width:d}s} {type:<{type_width:d}s}"
+
         for node in node_list:
             name = ("  " * node.indent if tree else '') + node.name
             if args.list_detail and 'length' in node:
-                detail = line + " {count:6d} {length:7.2f}km {rate:7.2f}m/pt"
+                detail = line + " {count:6d} {length:7.2f}km {rate:7.2f}m/pt" + (" {xpath:s}" if xpaths else "")
                 rate = node.length / node.count * 1000 if node.count>0 else 0.0
-                print(detail.format(name_width=name_len, name=name, type=node.type, type_width=type_len, count=node.count, length=node.length, rate=rate), file=out_list)
+                model = {
+                    "name_width": name_len,
+                    "name": name,
+                    "type": node.type,
+                    "type_width": type_len,
+                    "count": node.count,
+                    "length": node.length,
+                    "rate": rate,
+                    "xpath": etree.getpath(node.el) if xpaths else ""
+                }
+                print(detail.format(**model),file=out_list)
             else:
+                simple = line  + (" {xpath:s}" if xpaths else "")
                 print(line.format(name_width=name_len, name=name, type=node.type, type_width=type_len), file=out_list)
 
 
@@ -710,6 +767,49 @@ all_placemark_paths_old = '//*[local-name()="Placemark" and *[local-name()="Line
 all_placemark_paths = '//*[local-name()="Placemark" and (*[local-name()="LineString"] or *[local-name()="MultiGeometry" and *[local-name()="LineString"]])]'
 all_placemarks = '//*[local-name()="Placemark"]'
 
+def export_geojson(doc, outfile=None, pretty=False):
+
+    # def add(node, ):
+    #     return node.coords;
+    #
+    # top = doc.xpath('//*[local-name()="Document"]')
+
+    paths = doc.xpath(all_placemark_paths)
+
+    geo = {
+        'type': "FeatureCollection",
+        'features': []
+    }
+
+    for el in paths:
+
+        place = Placemark(el, doc)
+        sig = place.get_stype_sig()
+        stroke = sig[0][0]
+        color = '#'+stroke[6:8]+stroke[4:6]+stroke[2:4]
+        opacity = round(int(stroke[0:2],16)/255.0,3)
+        width = sig[0][1]
+        feature = {
+            'type': "Feature",
+            'properties': {
+                "stroke": color,
+                "stroke-width": float(width),
+                "stroke-opacity": opacity
+            }
+        }
+        name = place.get_name()
+        if name and name!='':
+            feature['properties']['name'] = name
+        o = {
+            'type': 'LineString',
+            'coordinates': place.coordinates
+        }
+        feature['geometry'] = o
+
+        geo['features'].append(feature)
+
+    print(json.dumps(geo, indent=4 if pretty else None, cls=filteringAttrDictEncoder), file=outfile)
+
 
 def process(options):
     """
@@ -771,14 +871,14 @@ def process(options):
         pre_stats = doc_stats(kml_doc)
         pre_stats_points = doc_stats(kml_doc, points=True)
 
-    if (args.extract_by_name):
-        extract_by_names(kml_doc, args.extract_by_name)
+    if args.extract:
+        extract_nodes(kml_doc, args.extract)
 
     if args.paths_only:
         paths_only(kml_doc)
 
     if args.delete:
-        delete_node(kml_doc, args.delete)
+        delete_nodes(kml_doc, args.delete)
 
     if args.delete_styles:
         remove_all_styles(kml_doc)
@@ -985,10 +1085,10 @@ def process(options):
     if args.optimize_styles:
         objectify.deannotate(kml_doc, xsi_nil=True)
 
-    if args.dump_line:
-        dump_line(kml_doc, args.dump_line, out_list=out_list)
+    if args.dump_path:
+        dump(kml_doc, args.dump_path, out_list=out_list)
     elif args.tree or args.list:
-        print_list(kml_doc, args.filter, tree=args.tree, out_list=out_list, list_format=args.list_format if 'list_format' in args else 'text')
+        print_list(kml_doc, args.filter, tree=args.tree, out_list=out_list, xpaths=args.list_with_xpaths, list_format=args.list_format if 'list_format' in args else 'text')
 
     if args.namespaces:
         nsmap = read_namespaces(args.kmlfile)
@@ -996,6 +1096,9 @@ def process(options):
             dump_namespace_table(nsmap, outfile=out_nsmap, table_format=args.list_format if 'list_format' in args else 'text')
 
     if out_kml is not None:
-        kml_et.write(out_kml, pretty_print=args.pretty_print)
+        if (args.geojson):
+            export_geojson(kml_doc, pretty=args.pretty_print, outfile=out_kml)
+        else:
+            kml_et.write(out_kml, pretty_print=args.pretty_print)
 
     doc_stats(kml_doc)
