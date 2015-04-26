@@ -9,6 +9,7 @@ from math import radians, cos, sin, asin, sqrt
 from pykml import parser as kmlparser
 from simplify import simplify
 from lxml import objectify, etree as ET
+from copy import deepcopy
 
 placemark_name_and_type_xpath = \
     ur'.//*[local-name()="Placemark" and *[local-name()="name" and text()="%s"] and *[local-name()="%s"]]'
@@ -54,6 +55,7 @@ defaults = AttrDict({
     'serialize_names': False,
     'delete_styles': False,
     'paths_only': False,
+    'demulti_paths': False,
     'dump': [],
     'extract': [],
     'delete': [],
@@ -466,6 +468,44 @@ def extract_nodes(doc, kml_ids):
         document_element.append(node)
 
 
+def demulti_paths(doc):
+
+    # all the multi-segment linestrings
+    multis = doc.xpath(ur'//*[local-name()="Placemark"][*[local-name()="MultiGeometry"]/*[local-name()="LineString"]]')
+
+    for multi in reversed(multis):
+
+        # all the segments in each placemark
+        segments = multi.xpath(ur'.//*[local-name()="LineString"]')
+
+        # the MultiGeometry node
+        geometry = multi.xpath(ur'./*[local-name()="MultiGeometry"]')[0]
+        multi.remove(geometry)
+
+        # if there is more than one segment (not typical), get ready to make copies
+        if len(segments)>1:
+            # make a copy of the whole placemark
+            copy = deepcopy(multi)
+            # position in the list
+            parent = multi.xpath(ur'./..')[0]
+            index = parent.index(multi)
+            base_name = multi.name if hasattr(multi,"name") else None
+
+        for i in reversed(range(0,len(segments))):
+            if i==0:
+                # use the original placemark for the first segment
+                multi.append(segments[i])
+            else:
+                # use copies of it for subsequent segments
+                node = copy if i==1 else deepcopy(copy)
+                # append the linestring to the placemark node
+                node.append(segments[i])
+                # insert it so that they come out in the same order
+                parent.insert(index+1, node)
+                # serialize the names
+                node.name = objectify.StringElement("%s part %s" % (base_name, i+1))
+
+
 def paths_only(doc):
     paths = doc.xpath(all_placemark_paths)
 
@@ -870,6 +910,9 @@ def process(options):
         if v1: print("PROGRESS: recording 'before' statistics", file=out_diag)
         pre_stats = doc_stats(kml_doc)
         pre_stats_points = doc_stats(kml_doc, points=True)
+
+    if args.demulti_paths:
+        demulti_paths(kml_doc)
 
     if args.extract:
         extract_nodes(kml_doc, args.extract)

@@ -77,6 +77,8 @@ parser.add_argument("--extract", action="append", default=[], metavar='KML-IDS',
                     help="kml names and/or xpaths of Folder(s) or Placemark(s) to keep, all other's will be deleted **")
 parser.add_argument("--geojson", action="store_true",
                     help="output GeoJSON instead of KML")
+parser.add_argument("--demulti-paths", action="store_true",
+                    help="convert multisegment paths to a normal path")
 
 args = parser.parse_args()
 
