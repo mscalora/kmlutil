@@ -154,10 +154,10 @@ class Placemark:
 
         data_name_xpath = "//*[local-name()='Data' and @name='NAME']/*[local-name()='value']/text()"
 
-        if self.is_multi_geometry_polygon():
+        if self.is_multi_polygon():
             # concatenate all points for multi-geometry polygons
             self.coordinates = parse_coords(" ".join([str(s) for s in coords_list]))
-        elif self.is_multi_geometry_linestring():
+        elif self.is_multi_path():
             self.coordinates = parse_coords(" ".join([str(s) for s in coords_list]))
         elif hasattr(element, "MultiGeometry"):
             print("Unexpected MultiGeometry element %s " % self.placemark_element.tag + self.name if self.name is not None else (
@@ -170,22 +170,28 @@ class Placemark:
     def is_path(self):
         return hasattr(self.placemark_element, "LineString")
 
+    def is_multi_path(self):
+        return hasattr(self.placemark_element, "MultiGeometry") and hasattr(self.placemark_element.MultiGeometry, "LineString")
+
+    def is_path_or_multipath(self):
+        return self.is_path() or self.is_multi_path()
+
     def is_point(self):
         return hasattr(self.placemark_element, "Point")
 
     def is_polygon(self):
-        return hasattr(self.placemark_element, "Polygon") or self.is_multi_geometry_polygon()
+        return hasattr(self.placemark_element, "Polygon") or self.is_multi_polygon()
+
+    def is_multi_polygon(self):
+        return hasattr(self.placemark_element, "MultiGeometry") and hasattr(self.placemark_element.MultiGeometry, "Polygon")
 
     def is_multi_geometry(self):
         return hasattr(self.placemark_element, "MultiGeometry")
 
-    def is_multi_geometry_polygon(self):
-        return hasattr(self.placemark_element, "MultiGeometry") and hasattr(self.placemark_element.MultiGeometry, "Polygon")
-
-    def is_multi_geometry_linestring(self):
-        return hasattr(self.placemark_element, "MultiGeometry") and hasattr(self.placemark_element.MultiGeometry, "LineString")
-
     def get_coords(self):
+        return self.coordinates
+
+    def set_coords(self, coords):
         return self.coordinates
 
     def get_name(self):
@@ -299,6 +305,9 @@ class Placemark:
         self.coordinates = simplify(self.coordinates, args.path_error_limit)
         if args.verbose > 2 and len(c) > len(self.coordinates):
             print("Path simplified, Was", len(c), "points long and now ", len(self.coordinates), file=out_diag)
+        self.update_dom_coordinates()
+
+    def update_dom_coordinates(self):
         parent_list = self.placemark_element.xpath('.//*[*[local-name()="coordinates"]]')
         if parent_list:
             if args.optimize_coordinates:
@@ -313,6 +322,7 @@ class Placemark:
         if parent_list:
             parent_list[0].coordinates = \
                 objectify.StringElement(" ".join([",".join(["%.6f" % p[i] for i in [0, 1]]) for p in self.coordinates]))
+        self.update_dom_coordinates()
 
     @staticmethod
     def find_folder_by_name(folder_name, context):
@@ -964,7 +974,7 @@ def process(options):
             if args.optimize_styles:
                 optimize_style(placemark)
 
-            if placemark.is_path():
+            if placemark.is_path_or_multipath():
                 if args.optimize_paths:
                     placemark.simplify_path()
                 elif args.optimize_coordinates:
@@ -984,7 +994,7 @@ def process(options):
         if args.optimize_paths:
             for el in kml_doc.xpath(all_placemark_paths):
                 placemark = Placemark(el, kml_doc)
-                if placemark.is_path():
+                if placemark.is_path_or_multipath():
                     if args.optimize_paths:
                         placemark.simplify_path()
                     elif args.optimize_coordinates:
@@ -1127,6 +1137,14 @@ def process(options):
 
     if args.optimize_styles:
         objectify.deannotate(kml_doc, xsi_nil=True)
+
+    multies = kml_doc.xpath('//*[local-name()="MultiGeometry" and *[local-name()="LineString"]]')
+    if len(multies):
+        print(('Note: your input file appears to contain %d MultiGeometry path%s which are poorly supported in many ' +
+              'applications which accept KML files. You can use the use the --demulti-paths option to convert '+
+              'MultiGeometry paths to simple paths. This usually has little to no visual affect on typical file but it is ' +
+              'possible that some data or meta-data will be lost or changed unexpectantly. Making a backup is' +
+              'strongly reccomended.') % (len(multies), '' if len(multies)==1 else 's'))
 
     if args.dump_path:
         dump(kml_doc, args.dump_path, out_list=out_list)
