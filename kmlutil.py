@@ -12,15 +12,21 @@ from lxml import objectify, etree as ET
 from copy import deepcopy
 
 placemark_name_and_type_xpath = \
-    ur'.//*[local-name()="Placemark" and *[local-name()="name" and text()="%s"] and *[local-name()="%s"]]'
+    ur'.//*[local-name()="Placemark" and *[local-name()="name" and text()={name}] and *[local-name()={type}]]'
 placemark_2name_and_type_xpath = \
     ur'.//*[local-name()="Placemark" and *[local-name()="name" and (text()="%s" or text()="%s")] and *[local-name()="%s"]]'
 placemark_type_xpath = \
     ur'.//*[local-name()="Placemark" and *[local-name()="%s"]]'
 folder_by_name = \
-    ur'.//*[local-name()="Folder" and *[local-name()="name" and text()="%s"]]'
+    ur'.//*[local-name()="Folder" and *[local-name()="name" and normalize-space(text())={name}]]'
 folder_or_placemark_by_name = \
-    ur'.//*[(local-name()="Folder" or local-name()="Placemark") and *[local-name()="name" and text()="%s"]]'
+    ur'.//*[(local-name()="Folder" or local-name()="Placemark") and *[local-name()="name" and normalize-space(text())={name}]]'
+folder_or_placemark_by_name_starts_with = \
+    ur'.//*[(local-name()="Folder" or local-name()="Placemark") and *[local-name()="name" and starts-with(normalize-space(text()),{part0})]]'
+folder_or_placemark_by_name_ends_with = \
+    ur'.//*[(local-name()="Folder" or local-name()="Placemark") and *[local-name()="name" and contains(text(), {part0}) and substring(normalize-space(text()), string-length(normalize-space(text())) - string-length({part0}) + 1)={part0}]]'
+folder_or_placemark_by_name_match = \
+    ur'.//*[(local-name()="Folder" or local-name()="Placemark") and *[local-name()="name" and starts-with(normalize-space(text()),{part0}) and contains(text(), {part1}) and substring(normalize-space(text()), string-length(normalize-space(text())) - string-length({part1}) + 1)={part1}]]'
 top_level_folder_or_placemarks = \
     ur'/*/*[local-name()="Document"]/*[local-name()="Folder" or local-name()="Placemark"]'
 
@@ -59,6 +65,7 @@ defaults = AttrDict({
     'dump': [],
     'extract': [],
     'delete': [],
+    'rename': [],
 })
 
 args = None
@@ -326,10 +333,11 @@ class Placemark:
 
     @staticmethod
     def find_folder_by_name(folder_name, context):
-        if args.verbose > 2:
-            print(folder_by_name % folder_name, file=out_diag)
 
-        element_list = context.xpath(folder_by_name % folder_name)
+        xpath = folder_by_name.format(name=encodeXPathStringLiteral(folder_name))
+        if args.verbose > 2:
+            print(xpath, file=out_diag)
+        element_list = context.xpath(xpath)
 
         return None if element_list is None or len(element_list) == 0 else element_list[0]
 
@@ -349,7 +357,8 @@ class Placemark:
         if args.verbose > 2:
             print(placemark_name_and_type_xpath % (placemark_name, placemark_type), file=out_diag)
 
-        element_list = context.xpath(placemark_name_and_type_xpath % (placemark_name, placemark_type))
+        element_list = context.xpath(placemark_name_and_type_xpath.format(name=encodeXPathStringLiteral(placemark_name),
+                                                                          type=encodeXPathStringLiteral(placemark_type)))
 
         return None if element_list is None or len(element_list) == 0 else Placemark(element_list[0])
 
@@ -445,6 +454,15 @@ def count_points(element):
     return count
 
 
+def rename_placemarks(doc, renames):
+    for (id, new_name) in renames:
+        nodes = list_nodes(doc, id)
+        if args.verbose>1:
+            print("renaming %d item(s) to '%s'" % (len(nodes), new_name), file=out_diag)
+        for node in nodes:
+            node.name = objectify.StringElement(new_name)
+
+
 def delete_nodes(doc, kml_ids):
 
     nodes = list_nodes(doc, kml_ids)
@@ -454,7 +472,7 @@ def delete_nodes(doc, kml_ids):
     for node in reversed(nodes):
 
         if args.verbose > 1:
-            print("Deleteing %d item(s) named '%s'" % (len(fnodes), name), file=out_diag)
+            print("Deleteing %d item(s) named '%s'" % (len(nodes), node.name), file=out_diag)
 
         parent = node.xpath('./..')[0]
         parent.remove(node)
@@ -635,15 +653,26 @@ def kml_id_to_xpath(kml_id):
     if kml_id.startswith(('.','/')):
         return kml_id
     elif kml_id.startswith('&'):
-        return folder_or_placemark_by_name % kml_id[1:]
+        return folder_or_placemark_by_name.format(name=encodeXPathStringLiteral(kml_id[1:]))
+    elif kml_id.startswith('%'):
+        pat = kml_id[1:].split('*')
+        if len(pat) > 2:
+            print("ERROR: only one * (wildcard) is permitted in a name pattern", file=out_diag)
+            sys.exit(5)
+        if len(pat) == 1 or len(pat[1])==0:
+            return folder_or_placemark_by_name_starts_with.format(part0=encodeXPathStringLiteral(pat[0]))
+        if len(pat[0]) == 0 and len(pat[1]):
+            return folder_or_placemark_by_name_ends_with.format(part0=encodeXPathStringLiteral(pat[1]))
+        else:
+            return folder_or_placemark_by_name_match.format(part0=encodeXPathStringLiteral(pat[0]), part1=encodeXPathStringLiteral(pat[1]))
 
-    return folder_or_placemark_by_name % kml_id
+    return folder_or_placemark_by_name.format(name=encodeXPathStringLiteral(kml_id))
 
 
 def list_nodes(doc, kml_ids):
     xpaths = []
-    if isinstance(kml_ids,list):
-        xpaths  = map(kml_id_to_xpath,kml_ids)
+    if isinstance(kml_ids, list) or isinstance(kml_ids, tuple):
+        xpaths  = map(kml_id_to_xpath, kml_ids)
         # for kml_id in kml_ids:
         #     xpaths.append(kml_id_to_xpath(kml_ids))
     else:
@@ -664,15 +693,6 @@ def dump(kml_doc, line_name, out_list=sys.stdout):
         for point in placemark.coordinates:
             print(u','.join(map(unicode, point)), file=out_list)
 
-    # print(line_name, file=out_list)
-    # for el in kml_doc.xpath(all_placemarks):
-    #     placemark = Placemark(el, kml_doc)
-    #     print(placemark.get_name(), file=out_list)
-    #     #is_line_string =
-    #     if line_name=='-' or line_name==placemark.get_name():
-    #         for point in placemark.coordinates:
-    #             print(','.join(point.astype(unicode)), file=out_list)
-
 
 class filteringAttrDictEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -680,8 +700,26 @@ class filteringAttrDictEncoder(json.JSONEncoder):
             d = dict(obj)
             d.pop('el', None)
             return d
+        if isinstance(obj, objectify.ObjectifiedElement):
+            return None
         return json.JSONEncoder.default(self, obj)
 
+preprint_buf = None
+preprint_file = sys.stdout
+preprint_count= 0
+
+def preprint(str=None, file=sys.stdout):
+    global preprint_buf, preprint_file, preprint_count
+    str_match = preprint_buf is not None and str is not None and preprint_buf == str and preprint_file == file
+    if preprint_count > 0 and not str_match:
+        print(preprint_buf + ('' if preprint_count==1 else ' [%d occurances]' % preprint_count), file=preprint_file)
+        preprint_count = 0
+    if str_match:
+        preprint_count += 1
+    else:
+        preprint_count = 0 if str is None else 1
+        preprint_file = file
+        preprint_buf = str
 
 def print_list(doc, filter_list, tree=False, xpaths=False, list_format='text', out_list=sys.stdout):
 
@@ -708,10 +746,14 @@ def print_list(doc, filter_list, tree=False, xpaths=False, list_format='text', o
 
     if list_format == 'json':
 
-        if xpaths:
-            for node in node_list:
-                node.xpath = etree.getpath(node.el)
-        json.dump(node_list, out_list, indent=2 if args.pretty_print else None, cls=filteringAttrDictEncoder)
+        serializable_list = []
+        for node in node_list:
+            serializable_node = dict(node)
+            serializable_node.pop('el', None)
+            if xpaths:
+                serializable_node['xpath'] = etree.getpath(node.el)
+            serializable_list.append(serializable_node)
+        json.dump(serializable_list, out_list, indent=2 if args.pretty_print else None, cls=filteringAttrDictEncoder)
 
     else:
 
@@ -739,11 +781,12 @@ def print_list(doc, filter_list, tree=False, xpaths=False, list_format='text', o
                     "rate": rate,
                     "xpath": etree.getpath(node.el) if xpaths else ""
                 }
-                print(detail.format(**model),file=out_list)
+                preprint(detail.format(**model),file=out_list)
             else:
                 simple = line  + (" {xpath:s}" if xpaths else "")
-                print(line.format(name_width=name_len, name=name, type=node.type, type_width=type_len), file=out_list)
+                preprint(line.format(name_width=name_len, name=name, type=node.type, type_width=type_len), file=out_list)
 
+        preprint(None)
 
 def optimize_style(placemark):
     """
@@ -935,6 +978,9 @@ def process(options):
 
     if args.delete_styles:
         remove_all_styles(kml_doc)
+
+    if len(args.rename):
+        rename_placemarks(kml_doc, args.rename)
 
     if args.serialize_names:
         i = 0
