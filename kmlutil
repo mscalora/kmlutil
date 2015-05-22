@@ -81,8 +81,14 @@ parser.add_argument("--geojson", action="store_true",
                     help="output GeoJSON instead of KML")
 parser.add_argument("--demulti-paths", action="store_true",
                     help="convert multisegment paths to a normal path")
+parser.add_argument("--validate-styles", action="store_true",
+                    help="validate all style id references")
 parser.add_argument("--rename", action="append", default=[], nargs=2, metavar=('KML-ID', 'NEW-NAME'),
                     help="rename feature(s) KML-ID to NEW-NAME")
+parser.add_argument("--combine", action="store", default=False, dest='combine',
+                    help="append file/features from kml to input kml", type=argparse.FileType('r'))
+parser.add_argument("--combine-filter", action="append", default=[], dest='combine_filter', metavar='KML-IDS',
+                    help="kml names and/or xpaths of Folder(s) or Placemark(s) to append with main input kml **")
 
 args = parser.parse_args()
 
