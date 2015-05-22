@@ -4,7 +4,7 @@ import attrdict
 import json
 
 
-class attrDictEncoder(json.JSONEncoder):
+class AttrDictEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, attrdict.AttrDict):
             return obj._mapping
@@ -35,3 +35,43 @@ class CapturingStderr(list):
         sys.stderr = self._stderr
 
 
+def encode_xpath_string_literal(s):
+    if "'" not in s: return "'%s'" % s
+    if '"' not in s: return '"%s"' % s
+    return "concat('%s')" % s.replace("'", "',\"'\",'")
+
+
+def get_by_id(doc, el_id):
+    els = doc.xpath(ur'.//*[@id=%s]' % encode_xpath_string_literal(el_id))
+    return els[0] if len(els) else None
+
+
+def tag(el):
+    return el.tag.split('}')[-1]
+
+
+def chain(el, attr_chain):
+    it = el
+    for attr in attr_chain.split(';'):
+        if attr[0] == '{':
+            els = xp(it, attr[1:-1])
+            if len(els) == 0:
+                it = None
+                break
+            it = els[0]
+        elif attr == '@':
+            els = get_by_id(el.getroottree(), str(it).lstrip('#'))
+            if len(els) == 0:
+                it = None
+                break
+            it = els[0]
+        elif hasattr(it, attr):
+            it = it.text if attr == 'text' else it[attr]
+        else:
+            it = None
+            break
+    return it
+
+
+def xp(el, xpath):
+    return el.xpath(xpath, namespaces={'k': 'http://www.opengis.net/kml/2.2'})
