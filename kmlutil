@@ -59,6 +59,8 @@ parser.add_argument("--list-detail", "--list-details", action="store_true",
                     help="include node detail info in listing")
 parser.add_argument("--list-with-xpaths", "--list-with-xpath", action="store_true",
                     help="include node specific xpaths in list output")
+parser.add_argument("--list-only", action="append", default=[], metavar='KML-IDS',
+                    help="name(s) of Folder or Placemark to list **")
 parser.add_argument("--folderize", action="store_true",
                     help="move paths and points into folders if they contained in a 'Boundry' polygon child of folder")
 parser.add_argument("--folderize-limit", action="store", type=float, default=defaults.folderize_limit,
@@ -79,6 +81,14 @@ parser.add_argument("--geojson", action="store_true",
                     help="output GeoJSON instead of KML")
 parser.add_argument("--demulti-paths", action="store_true",
                     help="convert multisegment paths to a normal path")
+parser.add_argument("--validate-styles", action="store_true",
+                    help="validate all style id references")
+parser.add_argument("--rename", action="append", default=[], nargs=2, metavar=('KML-ID', 'NEW-NAME'),
+                    help="rename feature(s) KML-ID to NEW-NAME")
+parser.add_argument("--combine", action="store", default=False, dest='combine',
+                    help="append file/features from kml to input kml", type=argparse.FileType('r'))
+parser.add_argument("--combine-filter", action="append", default=[], dest='combine_filter', metavar='KML-IDS',
+                    help="kml names and/or xpaths of Folder(s) or Placemark(s) to append with main input kml **")
 
 args = parser.parse_args()
 
@@ -90,7 +100,7 @@ if args.verbose:
 options = AttrDict(args.__dict__)
 options.filter = None if args.filter is None else args.filter.split(",")
 
-if args.no_kml_out or (options.out_kml is None and (len(args.dump_path) or args.stats or args.list or args.tree or args.namespaces)):
+if args.no_kml_out or (options.out_kml is None and (len(args.dump_path) or len(args.rename) or args.stats or args.list or args.tree or args.namespaces)):
     options.out_list = sys.stdout
     options.out_stats = sys.stdout
     options.out_nsmap = sys.stdout

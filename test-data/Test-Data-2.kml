@@ -1,0 +1,66 @@
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document>
+    <name>Test-Data-2.kml</name>
+
+    <Placemark>
+      <name>Red (o=0.5)</name>
+      <Style>
+        <LineStyle>
+          <color>880000ff</color>
+          <width>8</width>
+        </LineStyle>
+      </Style>
+
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>-111.6215,40.42,0 -111.6216,40.41,0 -111.62155,40.40,0 </coordinates>
+      </LineString>
+    </Placemark>
+
+    <Placemark>
+      <name>Red</name>
+      <Style>
+        <LineStyle>
+          <color>ff0000ff</color>
+          <width>8</width>
+        </LineStyle>
+      </Style>
+
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>-111.6215,40.42,0 -111.6216,40.41,0 -111.62155,40.40,0 </coordinates>
+      </LineString>
+    </Placemark>
+
+    <Placemark>
+      <name>Green</name>
+      <Style>
+        <LineStyle>
+          <color>ff00ff00</color>
+          <width>8</width>
+        </LineStyle>
+      </Style>
+
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>-111.6216,40.42,0 -111.6217,40.41,0 -111.62165,40.40,0 </coordinates>
+      </LineString>
+    </Placemark>
+
+    <Placemark>
+      <name>Blue</name>
+      <Style>
+        <LineStyle>
+          <color>ffff0000</color>
+          <width>8</width>
+        </LineStyle>
+      </Style>
+
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>-111.6217,40.42,0 -111.6218,40.41,0 -111.62175,40.40,0 </coordinates>
+      </LineString>
+    </Placemark>
+
+  </Document>
+</kml>
