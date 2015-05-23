@@ -1067,6 +1067,28 @@ def parse_kml(kml_file, diag_file=sys.stderr, exit_on_parse_error=False):
     return kml_etree
 
 
+def nicify(it):
+    return re.sub(ur'^(\d+\.\d$|\d+|\d+\.\d\d)(?:\.\d|\d*)$', ur'\1', str(it)) if isinstance(it, float) else str(it)
+
+
+def get_path_style_stats(doc):
+    path_style_map = {}
+
+    for el in doc.xpath(all_placemark_paths):
+        place = Placemark(el, doc)
+        if len(place.coordinates) == 0:
+            continue
+        parts = place.get_path_color_width_opacity()
+        sig = '-'.join([nicify(it) if isinstance(it, float) else str(it) for it in parts]) if len(parts) else 'UNSTYLED'
+
+        if sig not in path_style_map:
+            path_style_map[sig] = {'sig': sig, 'count': 1, 'color': parts[0], 'width': parts[1], 'opacity': parts[2]}
+        else:
+            path_style_map[sig]['count'] += 1
+
+    return path_style_map
+
+
 def process(options):
     """
 
@@ -1247,28 +1269,22 @@ def process(options):
                     else:
                         print(line_format.format(e[0], e[1], f, p), file=out_stats)
 
-        # this code depends on the old style optimizer signatures, could use style_dir maybe
-        # if args.stats_format == 'text':
-        #     print("")
-        #     print("=== Path Style Counts === <normal-color>-<size>-<highlight-color>-<size>", file=out_stats)
-        #
-        # path_type_map = get_path_stats(kml_doc)
-        # for sig, count in path_type_map.iteritems():
-        #     if args.stats_format == 'json':
-        #         parts = sig.split('-')
-        #         path_types.append({
-        #             'color': parts[0] if len(parts) > 0 else 'n/a',
-        #             'width': parts[1] if len(parts) > 1 else 'n/a',
-        #             'count': count
-        #         })
-        #     else:
-        #         print("{0:>24s} {1:>6d}".format(sig, count), file=out_stats)
+        if args.stats_format == 'text':
+            print("")
+            print("=== Path Style Counts === <color>-<width>-<opacity>", file=out_stats)
+
+        path_style_map = get_path_style_stats(kml_doc)
+        for sig, data in path_style_map.iteritems():
+            if args.stats_format == 'json':
+                path_types.append(data)
+            else:
+                print("{0:>24s} {1:>6d}".format(sig, data['count']), file=out_stats)
 
         if args.stats_format == 'json':
             print(json.dumps({
                 'element_counts': element_counts,
                 'point_counts': point_counts,
-                'path_type_counts': path_types
+                'path_style_counts': path_types
             }, indent=4), file=out_stats)
 
     if args.folderize:
