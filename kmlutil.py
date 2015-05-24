@@ -368,16 +368,6 @@ class Placemark:
                 Placemark.id_style_refs[el_id] = []
             Placemark.id_style_refs[el_id].append(element)
 
-    # @staticmethod
-    # def remove_style_id(style_id):
-    #     Placemark.id_map.pop(style_id, None)
-    #     Placemark.id_style_refs.pop(style_id, None)
-
-    # @staticmethod
-    # def add_style_id(style_id, element, refs=None):
-    #     Placemark.id_map[style_id] = element
-    #     Placemark.id_style_refs[style_id] = refs
-
     @staticmethod
     def get_style_by_id(style_id, doc=None):
         """
@@ -415,9 +405,9 @@ def find_boundry_folders(kml_doc):
 
 def count_points(element):
     count = 0
-    tag = element.tag.split('}')[-1]
-    if tag == "Placemark" or tag == "Point":
-        coords = element.xpath('.//*[local-name()="coordinates"]/text()')
+    tag = util.tag(element)
+    if tag == "Document" or tag == "LineString" or tag == "Polygon" or tag == "Point":
+        coords = util.xp(element, './/k:coordinates/text()')
         for coord in coords:
             count += len(coord.strip().split())
     return count
@@ -540,12 +530,15 @@ def doc_stats(doc, points=False):
     :return: map as above
     """
     stats_map = {}
-    for el in doc.xpath('//*'):
-        uri, tag = el.tag[1:].split('}')
-        if tag[0].isupper():
-            if tag not in stats_map:
-                stats_map[tag] = 0
-            stats_map[tag] += count_points(el) if points else 1
+    predicate = ur'translate(substring(local-name(),1,1),"abcdefghijkmlnopqrstuvwxyz","ABCDEFGHIJKMLNOPQRSTUVWXYZ")=substring(local-name(),1,1)'
+    all_uppercase = ur'//*[' + predicate + ']'
+    # all_with_coords = ur'//*[' + predicate + ' and .//*[.//k:coordinates]]'
+    all_with_coords = ur'//*[' + predicate + ' and .//k:coordinates]'
+    for el in util.xp(doc, all_with_coords if points else all_uppercase):    # doc.xpath(ur'//*[.//*[local-name()="coordinates"]]'): ABCDEFGHIJKMLNOPQRSTUVWXYZ
+        tag = util.tag(el)
+        if tag not in stats_map:
+            stats_map[tag] = 0
+        stats_map[tag] += count_points(el) if points else 1
 
     return stats_map
 
