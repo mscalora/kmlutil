@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://earth.google.com/kml/2.2">
+<Document>
+	<name>Positively 4th Street</name>
+	<open>1</open>
+	<description><![CDATA[At one time, Bob Dylan lived on West 4th Street in Manhattan.  He also wrote the song <a href="http://www.youtube.com/watch?v=zoEuIJQo0_I">Positively 4th Street (Youtube)</a>.<br></br>But some believe that in that song, he was referring to <a href="http://bbs.keyhole.com/ubb/placemarks/cl-11-05-05-968075595.kmz"> Fourth Street, Dinkytown, Minneapolis, Minnesota (placemark)</a>.<br></br><br></br><a href="http://en.wikipedia.org/wiki/Positively_4th_Street">Wikipedia: Positively 4th Street</a><br></br>]]></description>
+	<LookAt>
+		<longitude>-73.98717748135407</longitude>
+		<latitude>40.71967093336784</latitude>
+		<altitude>0</altitude>
+		<range>4981.278785575146</range>
+		<tilt>1.005254116649452e-011</tilt>
+		<heading>2.835373902109318e-014</heading>
+		<altitudeMode>relativeToGround</altitudeMode>
+	</LookAt>
+	<Style id="sn_ylw-pushpin_copy4">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+	</Style>
+	<StyleMap id="msn_cross-hairs_copy1">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_cross-hairs_copy1</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_cross-hairs_highlight_copy1</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sn_ylw-pushpin_copy0">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+	</Style>
+	<Style id="sh_ylw-pushpin">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+	</Style>
+	<Style id="sn_ylw-pushpin">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+	</Style>
+	<Style id="sh_ylw-pushpin_copy1">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+	</Style>
+	<Style id="sh_cross-hairs_highlight_copy4">
+		<IconStyle>
+			<color>ff0000ff</color>
+			<scale>1.2</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/shapes/cross-hairs_highlight.png</href>
+			</Icon>
+		</IconStyle>
+	</Style>
+	<Style id="sn_ylw-pushpin_copy3">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+	</Style>
+	<StyleMap id="msn_ylw-pushpin">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sn_cross-hairs">
+		<IconStyle>
+			<color>ff0000ff</color>
+			<scale>1.2</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/shapes/cross-hairs.png</href>
+			</Icon>
+		</IconStyle>
+	</Style>
+	<Style id="sn_ylw-pushpin_copy1">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+	</Style>
+	<Style id="sh_cross-hairs_highlight_copy3">
+		<IconStyle>
+			<color>ff0000ff</color>
+			<scale>1.2</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/shapes/cross-hairs_highlight.png</href>
+			</Icon>
+		</IconStyle>
+	</Style>
+	<Style id="sh_cross-hairs_highlight">
+		<IconStyle>
+			<color>ff0000ff</color>
+			<scale>1.2</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/shapes/cross-hairs_highlight.png</href>
+			</Icon>
+		</IconStyle>
+	</Style>
+	<StyleMap id="msn_cross-hairs_copy3">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_cross-hairs_copy3</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_cross-hairs_highlight_copy3</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sn_cross-hairs_copy3">
+		<IconStyle>
+			<color>ff0000ff</color>
+			<scale>1.2</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/shapes/cross-hairs.png</href>
+			</Icon>
+		</IconStyle>
+	</Style>
+	<Style id="sn_cross-hairs_copy0">
+		<IconStyle>
+			<color>ff0000ff</color>
+			<scale>1.2</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/shapes/cross-hairs.png</href>
+			</Icon>
+		</IconStyle>
+	</Style>
+	<StyleMap id="msn_ylw-pushpin_copy1">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin_copy1</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin_copy1</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="msn_ylw-pushpin_copy4">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin_copy4</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin_copy4</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sn_cross-hairs_copy1">
+		<IconStyle>
+			<color>ff0000ff</color>
+			<scale>1.2</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/shapes/cross-hairs.png</href>
+			</Icon>
+		</IconStyle>
+		<LabelStyle>
+			<color>ff0000ff</color>
+		</LabelStyle>
+	</Style>
+	<Style id="sn_cross-hairs_copy4">
+		<IconStyle>
+			<color>ff0000ff</color>
+			<scale>1.2</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/shapes/cross-hairs.png</href>
+			</Icon>
+		</IconStyle>
+	</Style>
+	<StyleMap id="msn_cross-hairs_copy0">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_cross-hairs_copy0</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_cross-hairs_highlight_copy0</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sh_cross-hairs_highlight_copy0">
+		<IconStyle>
+			<color>ff0000ff</color>
+			<scale>1.2</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/shapes/cross-hairs_highlight.png</href>
+			</Icon>
+		</IconStyle>
+	</Style>
+	<StyleMap id="msn_cross-hairs">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_cross-hairs</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_cross-hairs_highlight</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="msn_cross-hairs_copy4">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_cross-hairs_copy4</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_cross-hairs_highlight_copy4</styleUrl>
+		</Pair>
+	</StyleMap>
+	<StyleMap id="msn_ylw-pushpin_copy3">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin_copy3</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin_copy3</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sh_ylw-pushpin_copy3">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+	</Style>
+	<StyleMap id="msn_ylw-pushpin_copy0">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#sn_ylw-pushpin_copy0</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#sh_ylw-pushpin_copy0</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="sh_cross-hairs_highlight_copy1">
+		<IconStyle>
+			<color>ff0000ff</color>
+			<scale>1.2</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/shapes/cross-hairs_highlight.png</href>
+			</Icon>
+		</IconStyle>
+		<LabelStyle>
+			<color>ff0000ff</color>
+		</LabelStyle>
+	</Style>
+	<Style id="sh_ylw-pushpin_copy4">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+	</Style>
+	<Style id="sh_ylw-pushpin_copy0">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+		<LineStyle>
+			<color>ff0000ff</color>
+			<width>2</width>
+		</LineStyle>
+	</Style>
+	<Folder>
+		<name>Positively 4th Street</name>
+		<open>1</open>
+		<description><![CDATA[At one time, Bob Dylan lived on West 4th Street in Manhattan.  He also wrote the song <a href="http://www.youtube.com/watch?v=zoEuIJQo0_I">Positively 4th Street (Youtube)</a>.<br></br>But some believe that in that song, he was referring to <a href="http://bbs.keyhole.com/ubb/placemarks/cl-11-05-05-968075595.kmz"> Fourth Street, Dinkytown, Minneapolis, Minnesota (placemark)</a>.]]></description>
+		<LookAt>
+			<longitude>-73.98717748135407</longitude>
+			<latitude>40.71967093336784</latitude>
+			<altitude>0</altitude>
+			<range>4981.278785576561</range>
+			<tilt>1.394022789590019e-011</tilt>
+			<heading>1.207863030345114e-014</heading>
+			<altitudeMode>relativeToGround</altitudeMode>
+		</LookAt>
+		<Folder>
+			<name>4th Street, Manhattan, New York City</name>
+			<description><![CDATA[At one time, Bob Dylan lived on West 4th Street in Manhattan.  He also wrote the song <a href="http://www.youtube.com/watch?v=zoEuIJQo0_I">Positively 4th Street (Youtube)</a>.<br></br>But some believe that in that song, he was referring to <a href="http://bbs.keyhole.com/ubb/placemarks/cl-11-05-05-968075595.kmz"> Fourth Street, Dinkytown, Minneapolis, Minnesota (placemark)</a>.<br></br><br></br><a href="http://en.wikipedia.org/wiki/Positively_4th_Street">Wikipedia: Positively 4th Street</a><br></br>]]></description>
+			<LookAt>
+				<longitude>-73.99116380552295</longitude>
+				<latitude>40.73012375116786</latitude>
+				<altitude>0</altitude>
+				<range>2712.778401805204</range>
+				<tilt>6.157009382318511e-011</tilt>
+				<heading>1.628022536913839e-014</heading>
+				<altitudeMode>relativeToGround</altitudeMode>
+			</LookAt>
+			<Placemark>
+				<name>4th Street</name>
+				<description>This is where West 4th Street and East 4th Street meet.</description>
+				<LookAt>
+					<longitude>-73.99449300609888</longitude>
+					<latitude>40.72843611387419</latitude>
+					<altitude>0</altitude>
+					<range>97.21272175082518</range>
+					<tilt>2.063111217047721e-010</tilt>
+					<heading>-0.0001703362745058053</heading>
+					<altitudeMode>relativeToGround</altitudeMode>
+				</LookAt>
+				<styleUrl>#msn_cross-hairs</styleUrl>
+				<Point>
+					<coordinates>-73.99424216550874,40.72841449787627,0</coordinates>
+				</Point>
+			</Placemark>
+			<Placemark>
+				<name>4th Street</name>
+				<description>This is West 4th Street and East 4th Street.</description>
+				<styleUrl>#msn_ylw-pushpin</styleUrl>
+				<LineString>
+					<tessellate>1</tessellate>
+					<coordinates>
+-74.00387143197695,40.73938889111422,0 -74.00385384376619,40.73754718929048,0 -74.00282489953835,40.73362290864498,0 -74.00117688855028,40.73179461918079,0 -73.9965247571123,40.72955363131665,0 -73.99151388379153,40.72705579756408,0 -73.98481549413438,40.72425773977408,0 -73.9777690586244,40.7212861865742,0 </coordinates>
+				</LineString>
+			</Placemark>
+		</Folder>
+		<Folder>
+			<name>Bleecker Street, Manhattan, New York City</name>
+			<description><![CDATA[Fog's rollin' in off the East River bank<br></br>
+Like a shroud it covers Bleecker Street<br></br><a href="http://www.youtube.com/watch?v=e5UY1t47TNY">- Simon and Garfunkel - Bleecker Street (Youtube)</a><br></br><br></br><a href="http://en.wikipedia.org/wiki/Bleecker_Street">Wikipedia: Bleecker Street</a><br></br>]]></description>
+			<LookAt>
+				<longitude>-73.99971093237878</longitude>
+				<latitude>40.73057432645751</latitude>
+				<altitude>0</altitude>
+				<range>1429.913045523962</range>
+				<tilt>7.654211654586499e-012</tilt>
+				<heading>1.208327998891315e-014</heading>
+				<altitudeMode>relativeToGround</altitudeMode>
+			</LookAt>
+			<Placemark>
+				<name>Bleecker Street</name>
+				<description><![CDATA[Fog's rollin' in off the East River bank<br></br>
+Like a shroud it covers Bleecker Street<br></br><a href="http://www.youtube.com/watch?v=e5UY1t47TNY">- Simon and Garfunkel - Bleecker Street (Youtube)</a><br></br><br></br><a href="http://en.wikipedia.org/wiki/Bleecker_Street">Wikipedia: Bleecker Street</a><br></br>]]></description>
+				<LookAt>
+					<longitude>-73.99842066391071</longitude>
+					<latitude>40.72915776274051</latitude>
+					<altitude>0</altitude>
+					<range>594.0812425696056</range>
+					<tilt>2.319125158699098e-010</tilt>
+					<heading>-0.0027319565181103</heading>
+					<altitudeMode>relativeToGround</altitudeMode>
+				</LookAt>
+				<styleUrl>#msn_cross-hairs_copy0</styleUrl>
+				<Point>
+					<coordinates>-74.00112174759589,40.72915899552847,0</coordinates>
+				</Point>
+			</Placemark>
+			<Placemark>
+				<name>Bleecker Street</name>
+				<description><![CDATA[Fog's rollin' in off the East River bank<br></br>
+Like a shroud it covers Bleecker Street<br></br><a href="http://www.youtube.com/watch?v=e5UY1t47TNY">- Simon and Garfunkel - Bleecker Street (Youtube)</a><br></br><br></br><a href="http://en.wikipedia.org/wiki/Bleecker_Street">Wikipedia: Bleecker Street</a><br></br>]]></description>
+				<styleUrl>#msn_ylw-pushpin_copy1</styleUrl>
+				<LineString>
+					<tessellate>1</tessellate>
+					<coordinates>
+-74.00575449016236,40.73707662948543,0 -74.00554191627741,40.73690625024944,0 -74.00538601097382,40.73673685526818,0 -74.00521686221545,40.73633008816115,0 -74.00456105633072,40.73401606089652,0 -74.00442116874646,40.73369229917845,0 -74.00359113655536,40.73226884473437,0 -74.00245589821969,40.73029194981276,0 -74.00220721722748,40.72989241400484,0 -74.00213793566132,40.72970906736462,0 -74.00200559260316,40.72958648484585,0 -73.99891388500097,40.72804979396432,0 -73.99442853778695,40.72581331915866,0 -73.99225549875099,40.72523919461199,0 </coordinates>
+				</LineString>
+			</Placemark>
+		</Folder>
+		<Folder>
+			<name>Clinton Street, Manhattan, New York City</name>
+			<description><![CDATA[New York is cold, but I like where I'm living.<br></br>
+There's music on Clinton Street all through the evening.<br></br><br></br>
+<a href="http://www.youtube.com/watch?v=9aRKZFR5imM">- Leonard Cohen: Famous Blue Raincoat (Youtube)</a><br></br>]]></description>
+			<LookAt>
+				<longitude>-73.98493615882065</longitude>
+				<latitude>40.71550581724902</latitude>
+				<altitude>0</altitude>
+				<range>1471.14896622566</range>
+				<tilt>0</tilt>
+				<heading>7.880638653266265e-015</heading>
+				<altitudeMode>relativeToGround</altitudeMode>
+			</LookAt>
+			<Placemark>
+				<name>Clinton Street</name>
+				<description><![CDATA[New York is cold, but I like where I'm living.<br></br>
+There's music on Clinton Street all through the evening.<br></br><br></br>
+<a href="http://www.youtube.com/watch?v=9aRKZFR5imM">- Leonard Cohen: Famous Blue Raincoat (Youtube)</a><br></br>]]></description>
+				<LookAt>
+					<longitude>-73.98271994781204</longitude>
+					<latitude>40.71905702430297</latitude>
+					<altitude>0</altitude>
+					<range>482.0196493373188</range>
+					<tilt>3.577986965718113e-010</tilt>
+					<heading>0.007510948482411482</heading>
+					<altitudeMode>relativeToGround</altitudeMode>
+				</LookAt>
+				<styleUrl>#msn_cross-hairs_copy4</styleUrl>
+				<Point>
+					<coordinates>-73.98532821111832,40.71867603593994,0</coordinates>
+				</Point>
+			</Placemark>
+			<Placemark>
+				<name>Clinton Street</name>
+				<description><![CDATA[New York is cold, but I like where I'm living.<br></br>
+There's music on Clinton Street all through the evening.<br></br><br></br>
+<a href="http://www.youtube.com/watch?v=9aRKZFR5imM">- Leonard Cohen: Famous Blue Raincoat (Youtube)</a><br></br>]]></description>
+				<styleUrl>#msn_ylw-pushpin_copy0</styleUrl>
+				<LineString>
+					<tessellate>1</tessellate>
+					<coordinates>
+-73.98384981919725,40.72143147668552,0 -73.98566982259008,40.71788511071283,0 -73.98663646196569,40.71603298057773,0 -73.98669069286106,40.71595748861262,0 -73.9868024730921,40.71583456650915,0 -73.986965069288,40.71551017678324,0 -73.98709798881124,40.7151290502541,0 -73.98716672187726,40.71473922749424,0 -73.98715730693843,40.71429533055134,0 -73.98706344749357,40.71361165935046,0 -73.98673506300722,40.71157268981293,0 -73.98677542767209,40.71151649544952,0 -73.98660085672765,40.71051414410077,0 </coordinates>
+				</LineString>
+			</Placemark>
+		</Folder>
+		<Folder>
+			<name>South Street, Philadelphia</name>
+			<description><![CDATA[Where do all the hippist meet? (South Street, South Street)<br></br>
+Where the dancin is elite (South Street, South Street)<br></br>- The Orlons: South Street<br></br><br></br>
+<a href="http://www.youtube.com/watch?v=QJdZ3nI-PSk">The Orlons: South Street on Youtube</a><br></br><br></br><a href="http://en.wikipedia.org/wiki/South_Street_(Philadelphia)">Wikipedia: South Street (Philadelphia)</a><br></br>]]></description>
+			<LookAt>
+				<longitude>-75.16390105427493</longitude>
+				<latitude>39.94468869169372</latitude>
+				<altitude>0</altitude>
+				<range>4502.544887335205</range>
+				<tilt>0</tilt>
+				<heading>1.175198101013204e-014</heading>
+				<altitudeMode>relativeToGround</altitudeMode>
+			</LookAt>
+			<Placemark>
+				<name>South Street</name>
+				<description><![CDATA[Where do all the hippist meet? (South Street, South Street)<br></br>
+Where the dancin is elite (South Street, South Street)<br></br>- The Orlons: South Street<br></br><br></br>
+<a href="http://www.youtube.com/watch?v=QJdZ3nI-PSk">The Orlons: South Street on Youtube</a><br></br><br></br><a href="http://en.wikipedia.org/wiki/South_Street_(Philadelphia)">Wikipedia: South Street (Philadelphia)</a><br></br>]]></description>
+				<LookAt>
+					<longitude>-75.15224243217517</longitude>
+					<latitude>39.9419140668123</latitude>
+					<altitude>0</altitude>
+					<range>89.3257468937616</range>
+					<tilt>0</tilt>
+					<heading>0.021378185758272</heading>
+					<altitudeMode>relativeToGround</altitudeMode>
+				</LookAt>
+				<styleUrl>#msn_cross-hairs_copy1</styleUrl>
+				<Point>
+					<coordinates>-75.15234580925355,39.94201621230551,0</coordinates>
+				</Point>
+			</Placemark>
+			<Placemark>
+				<name>South Street</name>
+				<description><![CDATA[Where do all the hippist meet? (South Street, South Street)<br></br>
+Where the dancin is elite (South Street, South Street)<br></br>- The Orlons: South Street<br></br><br></br>
+<a href="http://www.youtube.com/watch?v=QJdZ3nI-PSk">The Orlons: South Street on Youtube</a><br></br><br></br><a href="http://en.wikipedia.org/wiki/South_Street_(Philadelphia)">Wikipedia: South Street (Philadelphia)</a><br></br>]]></description>
+				<styleUrl>#msn_ylw-pushpin_copy3</styleUrl>
+				<LineString>
+					<tessellate>1</tessellate>
+					<coordinates>
+-75.14351722951767,39.94091345635963,0 -75.1507501303408,39.94181808865865,0 -75.16024536192974,39.94299531577352,0 -75.17500556266006,39.94481899901899,0 -75.18579726847895,39.94619850897564,0 -75.19177934253249,39.95032413163109,0 </coordinates>
+				</LineString>
+			</Placemark>
+		</Folder>
+	</Folder>
+</Document>
+</kml>

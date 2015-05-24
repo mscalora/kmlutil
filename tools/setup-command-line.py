@@ -21,7 +21,7 @@ def kmllist(objs):
         print('%2d: %s "%s" %s' % (i, tag, name, other))
 
 
-tree = kmlparser.parse(open(os.path.join(sys.path[0], 'Test-Data.kml')))
+tree = kmlparser.parse(open(os.path.join(os.path.split(sys.path[0])[0], 'test-data', 'Test-Data.kml')))
 doc = tree.getroot()
 
 styles = doc.xpath(ur'//*[local-name()="Style"]')
