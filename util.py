@@ -41,7 +41,14 @@ def encode_xpath_string_literal(s):
     return "concat('%s')" % s.replace("'", "',\"'\",'")
 
 
-def get_by_id(doc, el_id):
+def get_by_id(doc, el_id, cache=None):
+    if cache is not None:
+        result = None
+        if len(cache) == 0:
+            for el in doc.xpath(ur'.//*[@id]'):
+                cache[str(el.attrib['id'])] = el
+        return cache[el_id] if el_id in cache else None
+
     els = doc.xpath(ur'.//*[@id=%s]' % encode_xpath_string_literal(el_id))
     return els[0] if len(els) else None
 
@@ -50,25 +57,22 @@ def tag(el):
     return el.tag.split('}')[-1]
 
 
-def chain(el, attr_chain):
+def chain(el, attr_chain, cache=None):
     it = el
     for attr in attr_chain.split(';'):
         if attr[0] == '{':
             els = xp(it, attr[1:-1])
             if len(els) == 0:
                 it = None
-                break
             it = els[0]
         elif attr == '@':
-            els = get_by_id(el.getroottree(), str(it).lstrip('#'))
-            if len(els) == 0:
-                it = None
-                break
-            it = els[0]
+            it = get_by_id(el.getroottree(), str(it).lstrip('#'), cache=cache)
         elif hasattr(it, attr):
             it = it.text if attr == 'text' else it[attr]
         else:
             it = None
+
+        if it is None:
             break
     return it
 

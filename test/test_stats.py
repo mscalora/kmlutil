@@ -13,7 +13,7 @@ class TestFromCommandLine(unittest.TestCase):
 
     def test_stats_text(self):
         env.clear()
-        result = env.run('kmlutil test-data/Test-Data.kml --stats')
+        result = env.run('kmlutil test-data/0-test-misc.kml --stats')
 
         self.assertRegexpMatches(result.stdout, ur'Counts by Element Type')
         self.assertRegexpMatches(result.stdout, ur'Document\s*1\s*1')
@@ -24,7 +24,7 @@ class TestFromCommandLine(unittest.TestCase):
 
     def test_stats_detail_text(self):
         env.clear()
-        result = env.run('kmlutil test-data/Test-Data.kml --stats --stats-detail')
+        result = env.run('kmlutil test-data/0-test-misc.kml --stats --stats-detail')
 
         self.assertRegexpMatches(result.stdout, ur'Counts by Element Type')
         self.assertRegexpMatches(result.stdout, ur'Coordinate Point Count by Element Type')
@@ -36,7 +36,7 @@ class TestFromCommandLine(unittest.TestCase):
 
     def test_stats_text_with_paths_only(self):
         env.clear()
-        result = env.run('kmlutil --paths-only test-data/Test-Data.kml --stats --stats-format text')
+        result = env.run('kmlutil --paths-only test-data/0-test-misc.kml --stats --stats-format text')
 
         self.assertRegexpMatches(result.stdout, ur'Counts by Element Type')
         self.assertRegexpMatches(result.stdout, ur'Document\s*1\s*1')
@@ -50,7 +50,7 @@ class TestFromCommandLine(unittest.TestCase):
 
     def test_stats_json(self):
         env.clear()
-        result = env.run('kmlutil test-data/Test-Data.kml --stats --stats-format json')
+        result = env.run('kmlutil test-data/0-test-misc.kml --stats --stats-format json')
 
         raw = json.loads(result.stdout)
 
@@ -67,7 +67,7 @@ class TestFromCommandLine(unittest.TestCase):
 
     def test_stats_json_with_paths_only(self):
         env.clear()
-        result = env.run('kmlutil test-data/Test-Data.kml --extract "Path with Inline Style" --stats --stats-format json')
+        result = env.run('kmlutil test-data/0-test-misc.kml --extract "Path with Inline Style" --stats --stats-detail --stats-format json')
 
         stats = stats_counts_to_dict(result.stdout)
 
@@ -83,9 +83,14 @@ class TestFromCommandLine(unittest.TestCase):
                 msg = "Counts not equal for %s, were %s and %s" % (tag, stats[tag].pre_count, stats[tag].post_count)
                 self.assertEqual(stats[tag].pre_count, stats[tag].post_count, msg=msg)
 
+        raw = AttrDict(json.loads(result.stdout))
+
+        self.assertNotEqual(0, len(raw.path_style_counts), msg='Path Style stats missing')
+        self.assertNotEqual(0, len(raw.point_counts), msg='Point count stats missing')
+
     def test_stats_detail_json_with_paths_only(self):
         env.clear()
-        result = env.run('kmlutil test-data/Test-Data.kml --paths-only --stats --stats-detail --stats-format json')
+        result = env.run('kmlutil test-data/0-test-misc.kml --paths-only --stats --stats-detail --stats-format json')
 
         raw = AttrDict(json.loads(result.stdout))
         for section in raw.point_counts:

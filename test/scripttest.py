@@ -11,6 +11,7 @@ import shlex
 import subprocess
 import re
 import zlib
+from StringIO import StringIO
 
 
 if sys.platform == 'win32':
@@ -57,6 +58,8 @@ def onerror(func, path, exc_info):
         raise
 
 __all__ = ['TestFileEnvironment']
+
+__test_subject__ = None
 
 if sys.platform == 'win32':
     def full_executable_path(invoked, environ):
@@ -218,6 +221,7 @@ class TestFileEnvironment(object):
         stdin = _popget(kw, 'stdin', None)
         quiet = _popget(kw, 'quiet', False)
         debug = _popget(kw, 'debug', False)
+        noshell = _popget(kw, 'noshell', False)
         if not self.temp_path:
             if 'expect_temp' in kw:
                 raise TypeError(
@@ -239,34 +243,71 @@ class TestFileEnvironment(object):
 
         files_before = self._find_files()
 
-        if debug:
-            proc = subprocess.Popen(all,
-                                    cwd=cwd,
-                                    # see http://bugs.python.org/issue8557
-                                    shell=(sys.platform == 'win32'),
-                                    env=clean_environ(self.environ))
-        else:
-            proc = subprocess.Popen(all, stdin=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    stdout=subprocess.PIPE,
-                                    cwd=cwd,
-                                    # see http://bugs.python.org/issue8557
-                                    shell=(sys.platform == 'win32'),
-                                    env=clean_environ(self.environ))
+        via_import = os.environ['SCRIPTTEST_VIA_IMPORT'] if 'SCRIPTTEST_VIA_IMPORT' in os.environ else None
 
-        if debug:
-            stdout, stderr = proc.communicate()
+        if via_import is not None:
+            prev_cwd = os.getcwd()
+            prev_stdout = sys.stdout
+            prev_stderr = sys.stderr
+
+            stdout_file = StringIO()
+            stderr_file = StringIO()
+
+            sys.stdout = stdout_file
+            sys.stderr = stderr_file
+
+            try:
+                os.chdir(cwd)
+                global __test_subject__
+                if __test_subject__ is None:
+                    import imp
+                    __test_subject__ = imp.load_source('test_subject', os.path.abspath(script))
+
+                func = getattr(__test_subject__, via_import)
+                func(args)
+            except SystemExit, e:
+                print prev_stderr, "Program exited"
+            finally:
+                os.chdir(prev_cwd)
+                sys.stdout = prev_stdout
+                sys.stderr = prev_stderr
+
+                stdout = stdout_file.getvalue()
+                stderr = stderr_file.getvalue()
+                stdout_file.close()
+                stderr_file.close()
+
+            proc = None  # keep PyCharm happy
+
         else:
-            stdout, stderr = proc.communicate(stdin)
-        stdout = string(stdout)
-        stderr = string(stderr)
+            if debug:
+                proc = subprocess.Popen(all,
+                                        cwd=cwd,
+                                        # see http://bugs.python.org/issue8557
+                                        shell=(sys.platform == 'win32'),
+                                        env=clean_environ(self.environ))
+            else:
+                proc = subprocess.Popen(all, stdin=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        cwd=cwd,
+                                        # see http://bugs.python.org/issue8557
+                                        shell=(sys.platform == 'win32'),
+                                        env=clean_environ(self.environ))
+
+            if debug:
+                stdout, stderr = proc.communicate()
+            else:
+                stdout, stderr = proc.communicate(stdin)
+            stdout = string(stdout)
+            stderr = string(stderr)
 
         stdout = string(stdout).replace('\r\n', '\n')
         stderr = string(stderr).replace('\r\n', '\n')
         files_after = self._find_files()
         result = ProcResult(
             self, all, stdin, stdout, stderr,
-            returncode=proc.returncode,
+            returncode=proc.returncode if via_import is None else 0,
             files_before=files_before,
             files_after=files_after)
         if not expect_error:

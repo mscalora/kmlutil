@@ -12,7 +12,7 @@ class TestFromCommandLine(unittest.TestCase):
 
     def test_paths_only(self):
         env.clear()
-        result = env.run('kmlutil --paths-only test-data/Test-Data.kml --pretty')
+        result = env.run('kmlutil --paths-only test-data/0-test-misc.kml --pretty')
         assert result.stdout.startswith('<kml ')
         etree = lxml_et.fromstring(result.stdout)
         doc = etree.getroottree()
@@ -22,7 +22,7 @@ class TestFromCommandLine(unittest.TestCase):
 
     def test_paths_only_stats(self):
         env.clear()
-        for test_file in ['Test-Data.kml', 'Positively-4th-Street.kml']:
+        for test_file in ['0-test-misc.kml', '1-test-hand-edit.kml']:
             result = env.run('kmlutil --paths-only test-data/%s --stats --stats-format json' % test_file)
             counts = stats_counts_to_dict(result.stdout)
             assert counts.LineString.post_count > 0
@@ -33,13 +33,13 @@ class TestFromCommandLine(unittest.TestCase):
     def test_extract(self):
         env.clear()
         # { file-name: { KML_ID-to-extract: { [ tag: post_count,...]},...},...}
-        tests = {'Test-Data.kml': {'Path with Inline Style': {'LineString': 1, 'Point': 0, 'Polygon': 0, 'Folder': 0},
+        tests = {'0-test-misc.kml': {'Path with Inline Style': {'LineString': 1, 'Point': 0, 'Polygon': 0, 'Folder': 0},
                                    '/*/*/*[20]': {'LineString': 1, 'Point': 0, 'Polygon': 0, 'Folder': 0},
                                    'Out': {'Point': 1, 'LineString': 0, 'Polygon': 0, 'Folder': 0},
                                    '/*/*/*[21]/*[5]/*[4]': {'Point': 1, 'LineString': 0, 'Polygon': 0, 'Folder': 0},
                                    'Other Stuff': {'Folder': 1, 'LineString': 0},
                                    '/*/*/*[21]/*[5]': {'Folder': 1, 'LineString': 0}},
-                 'us_states_5m.kml': {'Hawaii': {'Placemark': 1, 'Folder': 0},
+                 '2-test-us-states.kml': {'Hawaii': {'Placemark': 1, 'Folder': 0},
                                       'Utah': {'Polygon': 1, 'MultiGeometry': 0, 'Folder': 0},
                                       ('Utah', 'Nebraska'): {'Polygon': 2, 'MultiGeometry': 0, 'Folder': 0}}}
         # note: extracting a Folder will keep all descendants

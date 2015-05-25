@@ -1,5 +1,5 @@
 
-def getSquareDistance_list(p1, p2):
+def __get_square_distance_list(p1, p2):
     """
     Square distance between two points
     """
@@ -9,7 +9,7 @@ def getSquareDistance_list(p1, p2):
     return dx * dx + dy * dy
 
 
-def getSquareSegmentDistance_list(p, p1, p2):
+def __get_square_segment_distance_list(p, p1, p2):
     """
     Square distance between point and a segment
     """
@@ -34,7 +34,8 @@ def getSquareSegmentDistance_list(p, p1, p2):
 
     return dx * dx + dy * dy
 
-def getSquareDistance_dict(p1, p2):
+
+def __get_square_distance_dict(p1, p2):
     """
     Square distance between two points
     """
@@ -44,7 +45,7 @@ def getSquareDistance_dict(p1, p2):
     return dx * dx + dy * dy
 
 
-def getSquareSegmentDistance_dict(p, p1, p2):
+def __get_square_segment_distance_dict(p, p1, p2):
     """
     Square distance between point and a segment
     """
@@ -69,19 +70,21 @@ def getSquareSegmentDistance_dict(p, p1, p2):
 
     return dx * dx + dy * dy
 
-def simplifyRadialDistance(points, tolerance):
+
+def simplify_radial_distance(points, tolerance):
     point_is_dict = isinstance(points[0], dict)
 
-    getSquareDistance = getSquareDistance_dict if point_is_dict else getSquareDistance_list
+    get_square_distance = __get_square_distance_dict if point_is_dict else __get_square_distance_list
 
     length = len(points)
     prev_point = points[0]
     new_points = [prev_point]
+    point = None
 
     for i in range(length):
         point = points[i]
 
-        if getSquareDistance(point, prev_point) > tolerance:
+        if get_square_distance(point, prev_point) > tolerance:
             new_points.append(point)
             prev_point = point
 
@@ -91,13 +94,13 @@ def simplifyRadialDistance(points, tolerance):
     return new_points
 
 
-def simplifyDouglasPeucker(points, tolerance):
+def simplify_douglas_peucker(points, tolerance):
     point_is_dict = isinstance(points[0], dict)
 
-    getSquareSegmentDistance = getSquareSegmentDistance_dict if point_is_dict else getSquareSegmentDistance_list
+    get_square_segment_distance = __get_square_segment_distance_dict if point_is_dict else __get_square_segment_distance_list
 
     length = len(points)
-    markers = [0] * length  # Maybe not the most efficent way?
+    markers = [0] * length
 
     first = 0
     last = length - 1
@@ -114,7 +117,7 @@ def simplifyDouglasPeucker(points, tolerance):
         max_sqdist = 0
 
         for i in range(first, last):
-            sqdist = getSquareSegmentDistance(points[i], points[first], points[last])
+            sqdist = get_square_segment_distance(points[i], points[first], points[last])
 
             if sqdist > max_sqdist:
                 index = i
@@ -148,12 +151,12 @@ def simplifyDouglasPeucker(points, tolerance):
     return new_points
 
 
-def simplify(points, tolerance=0.1, highestQuality=True):
+def simplify(points, tolerance=0.1, highest_quality=True):
     sqtolerance = tolerance * tolerance
 
-    if not highestQuality:
-        points = simplifyRadialDistance(points, sqtolerance)
+    if not highest_quality:
+        points = simplify_radial_distance(points, sqtolerance)
 
-    points = simplifyDouglasPeucker(points, sqtolerance)
+    points = simplify_douglas_peucker(points, sqtolerance)
 
     return points
