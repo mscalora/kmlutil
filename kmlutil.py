@@ -6,10 +6,12 @@ import re
 import sys
 import operator
 from math import radians, cos, sin, asin, sqrt
-from pykml import parser as kmlparser
-from simplify import simplify
-from lxml import objectify, etree as lxml_etree
 from copy import deepcopy
+
+from pykml import parser as kmlparser
+from lxml import objectify, etree as lxml_etree
+
+from simplify import simplify
 from ordered_set import OrderedSet as oSet
 
 placemark_name_and_type_xpath = \
@@ -159,39 +161,38 @@ def parse_coords(coords_text):
 
 class Placemark:
     km_doc = None
-    id_map = None
-    id_style_refs = None
 
     def __init__(self, element, kml_doc=None):
-        if kml_doc is not None and Placemark.id_map is None:
-            Placemark.id_map = {}
-            Placemark.id_style_refs = {}
-            Placemark.populate_id_map(kml_doc)
-
         self.__dict__['placemark_element'] = element
         self.__dict__['kml_doc'] = kml_doc
         self.__dict__['name'] = element.name if hasattr(element, "name") else None
 
-        coords_list = self.placemark_element.xpath('.//*[local-name()="coordinates"]/text()')
-        if not coords_list:
-            print("Unable to extract coordinates data", file=out_diag)
-            raise KMLError("Region coordinates not found")
+    def get_alias(self):
+        return util.tag(self) + \
+            ('-'.join([tag if hasattr(self, tag) else '' for tag in ['LineString', 'Point', 'Polygon', 'Folder', 'LinearRing', 'MultiGeometry']])) + \
+            (self.name if 'name' in self.__dict__ else '<unnamed>')
 
-        data_name_xpath = "//*[local-name()='Data' and @name='NAME']/*[local-name()='value']/text()"
-
-        if self.is_multi_polygon():
-            # concatenate all points for multi-geometry polygons
-            self.__dict__['coordinates'] = parse_coords(" ".join([str(s) for s in coords_list]))
-        elif self.is_multi_path():
-            self.__dict__['coordinates'] = parse_coords(" ".join([str(s) for s in coords_list]))
-        elif hasattr(element, "MultiGeometry"):
-            print("Unexpected MultiGeometry element %s " % self.placemark_element.tag + self.name if self.name is not None else (
-                element.xpath(data_name_xpath)[0] if len(element.xpath(data_name_xpath)) else "unnamed"))
-            print(lxml_etree.tostring(element, pretty_print=True))
+    def parse_coords(self, raise_on_failure=True):
+        coords_list = util.xp(self.placemark_element, './/k:coordinates/text()')
+        joined_coords_list = " ".join(coords_list).strip()
+        if len(coords_list) == 0 or joined_coords_list == '':
+            if raise_on_failure:
+                print("Feature does not contain any coordinates '%s'" % self.get_name(default='<unnamed>'), file=out_diag)
+                raise KMLError("Feature coordinates not found")
+            self.__dict__['coordinates'] = None
+        elif hasattr(self.placemark_element, "MultiGeometry") and not self.is_multi_polygon() and not self.is_multi_path():
+            if raise_on_failure:
+                print("Unexpected MultiGeometry element %s " % self.get_alias(), file=out_diag)
+                print(lxml_etree.tostring(self.__dict__, pretty_print=True))
+                raise KMLError("Feature coordinates not available for this type of MultiGeometry feature")
+            self.__dict__['coordinates'] = None
         else:
-            self.__dict__['coordinates'] = parse_coords(coords_list[0])
+            self.__dict__['coordinates'] = parse_coords(joined_coords_list)
+        return self.__dict__['coordinates']
 
     def __getattr__(self, attr):
+        if attr == 'coordinates':
+            return self.get_coords()
         return getattr(self.placemark_element, attr)
 
     def __setattr__(self, attr, value):
@@ -219,21 +220,24 @@ class Placemark:
         return hasattr(self.placemark_element, "MultiGeometry")
 
     def get_coords(self):
-        return self.coordinates
+        return self.__dict__['coordinates'] if 'coordinates' in self.__dict__ else self.parse_coords(raise_on_failure=False)
 
-    def get_name(self):
+    def has_coords(self):
+        return self.get_coords() is not None and len(self.__dict__['coordinates']) > 0
+
+    def get_name(self, default=None):
         namelist_list = self.placemark_element.xpath('.//*[local-name()="name"]/text()')
-        return namelist_list[0] if namelist_list else namelist_list
+        return namelist_list[0] if len(namelist_list) else default
 
     def is_point_inside(self, x, y):
-
-        n = len(self.coordinates)
+        c = self.get_coords()
+        n = len(c)
         inside = False
         xints = 0
 
-        p1x, p1y = self.coordinates[0][0:2]
+        p1x, p1y = c[0][0:2]
         for i in range(n + 1):
-            p2x, p2y = self.coordinates[i % n][0:2]
+            p2x, p2y = c[i % n][0:2]
             if y > min(p1y, p2y):
                 if y <= max(p1y, p2y):
                     if x <= max(p1x, p2x):
@@ -246,10 +250,11 @@ class Placemark:
         return inside
 
     def in_region(self, polygon, detail=False):
-        if len(self.coordinates) == 0:
+        c = self.get_coords()
+        if len(c) == 0:
             return False
-        begins_in = polygon.is_point_inside(self.coordinates[0][0], self.coordinates[0][1])
-        ends_in = polygon.is_point_inside(self.coordinates[-1][0], self.coordinates[-1][1])
+        begins_in = polygon.is_point_inside(c[0][0], c[0][1])
+        ends_in = polygon.is_point_inside(c[-1][0], c[-1][1])
         if not detail:
             return begins_in or ends_in
         all_in = True
@@ -257,7 +262,7 @@ class Placemark:
         points_in = 0
         segments_in = 0
         prev_in = False
-        for point in self.coordinates:
+        for point in c:
             is_in = polygon.is_point_inside(point[0], point[1])
             all_in = all_in and is_in
             any_in = any_in or is_in
@@ -266,13 +271,13 @@ class Placemark:
                 if not prev_in:
                     segments_in += 1
             prev_in = is_in
-        return begins_in, ends_in, any_in, all_in, points_in, len(self.coordinates), segments_in
+        return begins_in, ends_in, any_in, all_in, points_in, len(c), segments_in
 
     def get_normal_linestyle(self):
         if hasattr(self, 'Style') and hasattr(self.Style, 'LineStyle') and hasattr(self.Style.LineStyle, 'color'):
             kml_color = self.Style.LineStyle.color.text
 
-    def get_path_color_width_opacity(self):
+    def get_path_color_width_opacity(self, cache=None):
         result = ['000000', 3.0, 1.0]
         for chain in [
             "Style;LineStyle;color;text",
@@ -280,7 +285,7 @@ class Placemark:
             "styleUrl;text;@;{k:Pair[k:key[text()='normal']]};Style;LineStyle;color;text",
             "styleUrl;text;@;{k:Pair[k:key[text()='normal']]};styleUrl;text;@;LineStyle;color;text",
         ]:
-            color = util.chain(self, chain)
+            color = util.chain(self, chain, cache=cache)
             if color is not None:
                 result[0] = color[6:8] + color[4:6] + color[2:4]
                 result[2] = int(color[0:2], 16)/255.0
@@ -291,7 +296,7 @@ class Placemark:
             "styleUrl;text;@;{k:Pair[k:key[text()='normal']]};Style;LineStyle;width;text",
             "styleUrl;text;@;{k:Pair[k:key[text()='normal']]};styleUrl;text;@;LineStyle;width;text",
         ]:
-            width = util.chain(self, chain)
+            width = util.chain(self, chain, cache=cache)
             if width is not None:
                 result[1] = float(width)
                 break
@@ -301,34 +306,27 @@ class Placemark:
         self.placemark_element.getparent().remove(self.placemark_element)
 
     def simplify_path(self):
-        c = self.coordinates
-        if len(self.coordinates) < 10:
-            return
-        self.coordinates = simplify(self.coordinates, args.path_error_limit)
-        if args.verbose > 2 and len(c) > len(self.coordinates):
-            print("Path simplified, Was", len(c), "points long and now ", len(self.coordinates), file=out_diag)
-        self.update_dom_coordinates()
-
-    def update_dom_coordinates(self):
-        parent_list = self.placemark_element.xpath('.//*[*[local-name()="coordinates"]]')
-        if parent_list:
-            if args.optimize_coordinates:
-                parent_list[0].coordinates = \
-                    objectify.StringElement(" ".join([",".join(["%.6f" % p[i] for i in [0, 1]]) for p in self.coordinates]))
-            else:
-                parent_list[0].coordinates = \
-                    objectify.StringElement(" ".join([",".join([str(i) for i in p]) for p in self.coordinates]))
+        coords = util.xp(self.placemark_element, ur'.//k:coordinates')
+        for coord in coords:
+            text = coord.text
+            clist = [tuple([float(v) for v in node.split(',')]) for node in text.split()]
+            if len(clist) > 10:
+                cnew = simplify(clist, args.path_error_limit)
+                if args.optimize_coordinates:
+                    new = ' '.join([','.join([("%.6f" % v).rstrip('0').rstrip('.') for v in node]) for node in cnew])
+                else:
+                    new = ' '.join([','.join([(str(v)).rstrip('0').rstrip('.') for v in node]) for node in cnew])
+                coord.getparent().coordinates = objectify.StringElement(new)
 
     def optimize_coordinates(self):
-        parent_list = self.placemark_element.xpath('.//*[*[local-name()="coordinates"]]')
-        if parent_list:
-            parent_list[0].coordinates = \
-                objectify.StringElement(" ".join([",".join(["%.6f" % p[i] for i in [0, 1]]) for p in self.coordinates]))
-        self.update_dom_coordinates()
+        coords = util.xp(self.placemark_element, ur'.//k:coordinates')
+        for coord in coords:
+            text = coord.text
+            new = ' '.join([','.join([("%.6f" % float(v)).rstrip('0').rstrip('.') if '.' in v else v for v in node.split(',')]) for node in text.split()])
+            coord.getparent().coordinates = objectify.StringElement(new)
 
     @staticmethod
     def find_folder_by_name(folder_name, context):
-
         xpath = folder_by_name.format(name=encode4xpath(folder_name))
         if args.verbose > 2:
             print(xpath, file=out_diag)
@@ -356,34 +354,6 @@ class Placemark:
                                                                           type=encode4xpath(placemark_type)))
 
         return None if element_list is None or len(element_list) == 0 else Placemark(element_list[0])
-
-    @staticmethod
-    def populate_id_map(doc):
-        for element in doc.xpath('//*[@id]'):
-            Placemark.id_map[element.attrib['id']] = element
-
-        for element in doc.xpath('//*[local-name()="styleUrl"]'):
-            el_id = element.text[1:]
-            if el_id not in Placemark.id_style_refs:
-                Placemark.id_style_refs[el_id] = []
-            Placemark.id_style_refs[el_id].append(element)
-
-    @staticmethod
-    def get_style_by_id(style_id, doc=None):
-        """
-        get element by id in constant time
-        :rtype : etree.Element
-        """
-        el = Placemark.id_map.get(style_id, None)
-
-        if el is None and doc is not None:
-            els = doc.xpath(ur'//*[@id="%s"]' % style_id if "'" in style_id else ur"//*[@id='%s']" % style_id)
-            el = els[0] if len(els) > 0 else None
-        return el
-
-    @staticmethod
-    def get_style_refs_by_id(style_id):
-        return Placemark.id_style_refs[style_id]
 
 
 def find_boundry_folders(kml_doc):
@@ -901,6 +871,7 @@ def export_geojson(doc, out_file=None, pretty=False):
     # top = doc.xpath('//*[local-name()="Document"]')
 
     paths = doc.xpath(all_placemark_paths)
+    cache = {}
 
     geo = {
         'type': "FeatureCollection",
@@ -910,7 +881,7 @@ def export_geojson(doc, out_file=None, pretty=False):
     for el in paths:
 
         place = Placemark(el, doc)
-        style = place.get_path_color_width_opacity()
+        style = place.get_path_color_width_opacity(cache=cache)
         color = '#'+style[0]
         opacity = round(style[2], 3)
         width = style[1]
@@ -1066,12 +1037,13 @@ def nicify(it):
 
 def get_path_style_stats(doc):
     path_style_map = {}
+    cache = {}
 
-    for el in doc.xpath(all_placemark_paths):
+    for idx, el in enumerate(doc.xpath(all_placemark_paths)):
         place = Placemark(el, doc)
-        if len(place.coordinates) == 0:
+        if not place.has_coords():
             continue
-        parts = place.get_path_color_width_opacity()
+        parts = place.get_path_color_width_opacity(cache=cache)
         sig = '-'.join([nicify(it) if isinstance(it, float) else str(it) for it in parts]) if len(parts) else 'UNSTYLED'
 
         if sig not in path_style_map:
@@ -1267,7 +1239,8 @@ def process(options):
             print("=== Path Style Counts === <color>-<width>-<opacity>", file=out_stats)
 
         path_style_map = get_path_style_stats(kml_doc)
-        for sig, data in path_style_map.iteritems():
+        for sig in sorted(path_style_map.keys(), key=lambda x: -path_style_map[x]['count']):
+            data = path_style_map[sig]
             if args.stats_format == 'json':
                 path_types.append(data)
             else:
@@ -1367,5 +1340,3 @@ def process(options):
             export_geojson(kml_doc, pretty=args.pretty_print, out_file=out_kml)
         else:
             kml_et.write(out_kml, pretty_print=args.pretty_print)
-
-    doc_stats(kml_doc)

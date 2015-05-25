@@ -21,7 +21,19 @@ def kmllist(objs):
         print('%2d: %s "%s" %s' % (i, tag, name, other))
 
 
-tree = kmlparser.parse(open(os.path.join(os.path.split(sys.path[0])[0], 'test-data', 'Test-Data.kml')))
+kmlist = kmllist
+klist = kmllist
+
+
+def getpath(el):
+    return tree.getpath(el)
+
+
+def get(eid, context=None):
+    return get_by_id(doc if context is None else context, eid)
+
+
+tree = kmlparser.parse(open(os.path.join(os.path.split(sys.path[0])[0], 'test-data', '0-test-misc.kml')))
 doc = tree.getroot()
 
 styles = doc.xpath(ur'//*[local-name()="Style"]')
@@ -36,7 +48,13 @@ folder = folders[0]
 paths = doc.xpath(ur'//*[local-name()="Placemark" and *[local-name()="LineString"]]')
 path = paths[0]
 
-print("Variables setup: et, tree, doc, style, stylemap, folder or path ")
-print("Utilities/Remiders: ")
-print("    Dump: dump(path)")
-print("    Get by id: get_by_id(id)")
+def help():
+    print("Variables setup: et, tree, doc, style, stylemap, folder or path ")
+    print("Utilities/Remiders: ")
+    print("    Dump: dump(path)")
+    print("    Get by id: get(id)")
+    print("    List element list: kmllist(el_list)")
+    print("    Get xpath for el: getpath(id)")
+    print(" => Print this help: help()")
+
+help()
