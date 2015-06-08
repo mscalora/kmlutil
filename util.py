@@ -1,7 +1,15 @@
+from __future__ import print_function
 import sys
 from cStringIO import StringIO
 import attrdict
 import json
+
+_verbose = 0
+
+
+def set_verbosity(n):
+    global _verbose
+    _verbose = n
 
 
 class AttrDictEncoder(json.JSONEncoder):
@@ -78,4 +86,6 @@ def chain(el, attr_chain, cache=None):
 
 
 def xp(el, xpath):
-    return el.xpath(xpath, namespaces={'k': 'http://www.opengis.net/kml/2.2'})
+    if _verbose > 2:
+        print('xpath={xpath} on {tag}[{el}]'.format(xpath=xpath, tag=el.tag.split('}')[-1], el=el.getroottree().getpath(el)), file=sys.stderr)
+    return el.xpath(xpath, namespaces=dict({'kml': 'http://www.opengis.net/kml/2.2'}, **{k: v for k, v in el.nsmap.items() if k is not None}))
