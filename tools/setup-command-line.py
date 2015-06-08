@@ -7,6 +7,9 @@ import util
 from util import get_by_id
 
 
+util.set_verbosity(4)
+
+
 def dump(obj):
     et.dump(obj)
 

@@ -15,7 +15,7 @@ from simplify import simplify
 from ordered_set import OrderedSet as oSet
 
 placemark_name_and_type_xpath = \
-    ur'.//*[local-name()="Placemark" and *[local-name()="name" and text()={name}] and *[local-name()={type}]]'
+    ur'.//kml:Placemark[kml:{type} and kml:name[text()={name}]]'
 placemark_2name_and_type_xpath = \
     ur'.//*[local-name()="Placemark" and *[local-name()="name" and (text()="%s" or text()="%s")] and *[local-name()="%s"]]'
 placemark_type_xpath = \
@@ -85,6 +85,7 @@ defaults = AttrDict({
     'combine': False,
     'combine_filter': [],
     'validate_styles': False,
+    'reraise_errors': False,
 })
 
 args = None
@@ -173,7 +174,7 @@ class Placemark:
             (self.name if 'name' in self.__dict__ else '<unnamed>')
 
     def parse_coords(self, raise_on_failure=True):
-        coords_list = util.xp(self.placemark_element, './/k:coordinates/text()')
+        coords_list = util.xp(self.placemark_element, './/kml:coordinates/text()')
         joined_coords_list = " ".join(coords_list).strip()
         if len(coords_list) == 0 or joined_coords_list == '':
             if raise_on_failure:
@@ -251,7 +252,7 @@ class Placemark:
 
     def in_region(self, polygon, detail=False):
         c = self.get_coords()
-        if len(c) == 0:
+        if c is None or len(c) == 0:
             return False
         begins_in = polygon.is_point_inside(c[0][0], c[0][1])
         ends_in = polygon.is_point_inside(c[-1][0], c[-1][1])
@@ -281,9 +282,9 @@ class Placemark:
         result = ['000000', 3.0, 1.0]
         for chain in [
             "Style;LineStyle;color;text",
-            "StyleMap;{k:Pair[k:key[text()='normal']]};Style;LineStyle;color;text",
-            "styleUrl;text;@;{k:Pair[k:key[text()='normal']]};Style;LineStyle;color;text",
-            "styleUrl;text;@;{k:Pair[k:key[text()='normal']]};styleUrl;text;@;LineStyle;color;text",
+            "StyleMap;{kml:Pair[kml:key[text()='normal']]};Style;LineStyle;color;text",
+            "styleUrl;text;@;{kml:Pair[kml:key[text()='normal']]};Style;LineStyle;color;text",
+            "styleUrl;text;@;{kml:Pair[kml:key[text()='normal']]};styleUrl;text;@;LineStyle;color;text",
         ]:
             color = util.chain(self, chain, cache=cache)
             if color is not None:
@@ -292,9 +293,9 @@ class Placemark:
                 break
         for chain in [
             "Style;LineStyle;width;text",
-            "StyleMap;{k:Pair[k:key[text()='normal']]};Style;LineStyle;width;text",
-            "styleUrl;text;@;{k:Pair[k:key[text()='normal']]};Style;LineStyle;width;text",
-            "styleUrl;text;@;{k:Pair[k:key[text()='normal']]};styleUrl;text;@;LineStyle;width;text",
+            "StyleMap;{kml:Pair[kml:key[text()='normal']]};Style;LineStyle;width;text",
+            "styleUrl;text;@;{kml:Pair[kml:key[text()='normal']]};Style;LineStyle;width;text",
+            "styleUrl;text;@;{kml:Pair[kml:key[text()='normal']]};styleUrl;text;@;LineStyle;width;text",
         ]:
             width = util.chain(self, chain, cache=cache)
             if width is not None:
@@ -306,7 +307,7 @@ class Placemark:
         self.placemark_element.getparent().remove(self.placemark_element)
 
     def simplify_path(self):
-        coords = util.xp(self.placemark_element, ur'.//k:coordinates')
+        coords = util.xp(self.placemark_element, ur'.//kml:coordinates')
         for coord in coords:
             text = coord.text
             clist = [tuple([float(v) for v in node.split(',')]) for node in text.split()]
@@ -319,7 +320,7 @@ class Placemark:
                 coord.getparent().coordinates = objectify.StringElement(new)
 
     def optimize_coordinates(self):
-        coords = util.xp(self.placemark_element, ur'.//k:coordinates')
+        coords = util.xp(self.placemark_element, ur'.//kml:coordinates')
         for coord in coords:
             text = coord.text
             new = ' '.join([','.join([("%.6f" % float(v)).rstrip('0').rstrip('.') if '.' in v else v for v in node.split(',')]) for node in text.split()])
@@ -348,10 +349,11 @@ class Placemark:
     def find_by_name_and_type(placemark_name, placemark_type, context):
 
         if args.verbose > 2:
-            print(placemark_name_and_type_xpath % (placemark_name, placemark_type), file=out_diag)
+            print(placemark_name_and_type_xpath.format(name=encode4xpath(placemark_name),
+                                                       type=placemark_type), file=out_diag)
 
-        element_list = context.xpath(placemark_name_and_type_xpath.format(name=encode4xpath(placemark_name),
-                                                                          type=encode4xpath(placemark_type)))
+        element_list = util.xp(context, placemark_name_and_type_xpath.format(name=encode4xpath(placemark_name),
+                                                                             type=placemark_type))
 
         return None if element_list is None or len(element_list) == 0 else Placemark(element_list[0])
 
@@ -377,7 +379,7 @@ def count_points(element):
     count = 0
     tag = util.tag(element)
     if tag == "Document" or tag == "LineString" or tag == "Polygon" or tag == "Point":
-        coords = util.xp(element, './/k:coordinates/text()')
+        coords = util.xp(element, './/kml:coordinates/text()')
         for coord in coords:
             count += len(coord.strip().split())
     return count
@@ -502,9 +504,8 @@ def doc_stats(doc, points=False):
     stats_map = {}
     predicate = ur'translate(substring(local-name(),1,1),"abcdefghijkmlnopqrstuvwxyz","ABCDEFGHIJKMLNOPQRSTUVWXYZ")=substring(local-name(),1,1)'
     all_uppercase = ur'//*[' + predicate + ']'
-    # all_with_coords = ur'//*[' + predicate + ' and .//*[.//k:coordinates]]'
-    all_with_coords = ur'//*[' + predicate + ' and .//k:coordinates]'
-    for el in util.xp(doc, all_with_coords if points else all_uppercase):    # doc.xpath(ur'//*[.//*[local-name()="coordinates"]]'): ABCDEFGHIJKMLNOPQRSTUVWXYZ
+    all_with_coords = ur'//*[' + predicate + ' and .//kml:coordinates]'
+    for el in util.xp(doc, all_with_coords if points else all_uppercase):
         tag = util.tag(el)
         if tag not in stats_map:
             stats_map[tag] = 0
@@ -1005,7 +1006,7 @@ def combine_kml(doc, combine_file, filters):
                 doc_el.insert(style_pos_index, els[0])
 
 
-def parse_kml(kml_file, diag_file=sys.stderr, exit_on_parse_error=False):
+def parse_kml(kml_file, diag_file=sys.stderr, exit_on_parse_error=False, exit_on_error=True):
 
     kml_etree = None
 
@@ -1013,20 +1014,18 @@ def parse_kml(kml_file, diag_file=sys.stderr, exit_on_parse_error=False):
         kml_etree = kmlparser.parse(kml_file)
 
     except lxml_etree.XMLSyntaxError, e:
-        print("ERROR: an xml parsing error was encountered while interpreting input kml data, unable to continue", file=diag_file)
+        print("KMLUTIL ERROR: an xml parsing error was encountered while interpreting input kml data, unable to continue", file=diag_file)
         print("MESSAGE: %s" % e.message, file=diag_file)
-        if args.verbose >= 3:
+        if args.reraise_errors:
             raise
-        if exit_on_parse_error:
-            sys.exit(5)
+        raise KMLError("Error parsing kml document")
 
     except IOError, e:
-        print("ERROR: an I/O error was encountered while reading input, unable to continue", file=diag_file)
+        print("KMLUTIL ERROR: an I/O error was encountered while reading input, unable to continue", file=diag_file)
         print("MESSAGE: %s" % e.message, file=diag_file)
-        if args.verbose >= 3:
+        if args.reraise_errors:
             raise
-        if exit_on_parse_error:
-            sys.exit(10)
+        raise KMLError("Error reading kml document")
 
     return kml_etree
 
@@ -1062,6 +1061,8 @@ def process(options):
     global args, verboseness, out_diag, out_stats, out_kml
 
     args = options
+    if args.verbose > 0:
+        util.set_verbosity(args.verbose)
 
     # error messages and 'verbose' output
     out_diag = (open(os.devnull, 'w') if options['out_diag'] is None else options['out_diag']) if "out_diag" in options else sys.stderr
@@ -1130,25 +1131,43 @@ def process(options):
     if args.region:
         if args.region_file and args.verbose > 1:
             print("PROGRESS: parsing region document ", file=out_diag)
-        regions_et = kmlparser.parse(args.region_file if args.region_file else args.kmlfile)
+        try:
+            regions_et = kmlparser.parse(args.region_file if args.region_file else args.kmlfile)
+        except IOError, e:
+            print("KMLUTIL ERROR: Unable to read external region kml document", file=out_diag)
+            if args.reraise_errors:
+                raise
+            raise KMLError("External region document not readable")
+        except lxml_etree.XMLSyntaxError, e:
+            info = {
+                'file': e.filename if e.filename is not None else 'n/a',
+                'line': str(e.lineno) if e.lineno is not None else 'n/a',
+                'offset': str(e.offset) if e.offset is not None else 'n/a',
+                'message': str(e.message) if e.message is not None else 'n/a',
+            }
+            print("KMLUTIL ERROR: Error parsing external region kml document: file: '{file}' line {line} offset {offset} message '{message}' ".format(**info), file=out_diag)
+            if args.reraise_errors:
+                raise
+            raise KMLError("External region document not parsable")
+
         regions_doc = regions_et.getroot()
 
         if v1:
             print("PROGRESS: searching for cropping region named: '%s'" % args.region, file=out_diag)
 
         region = Placemark.find_by_name_and_type(args.region, "Polygon", regions_doc)
-        if not region:
+        if region is not None and len(region):
+            if v1:
+                print("PROGRESS: Found region Polygon with %d coords" % len(region.coordinates), file=out_diag)
+        else:
             folder = Placemark.find_folder_by_name(args.region, regions_doc)
             if folder is not None:
                 region = Placemark.find_by_type("Polygon", folder)
                 if region and args.verbose > 1:
                     print("PROGRESS: Found region Folder with Polygon with %d coords" % len(region.coordinates), file=out_diag)
-        else:
-            if v1:
-                print("PROGRESS: Found region Polygon with %d coords" % len(region.coordinates), file=out_diag)
 
-        if region is None:
-            print("ERROR: Unable to find suitable region with name %s" % args.region, file=out_diag)
+        if region is None or len(region) == 0:
+            print("KMLUTIL ERROR: Unable to find suitable region with name '%s'" % args.region, file=out_diag)
             raise KMLError("Region not found")
 
         if v2:

@@ -8,6 +8,7 @@ from attrdict import AttrDict
 
 defaults = kmlutil.defaults
 
+
 def main(argv):
     parser = argparse.ArgumentParser(epilog="""Notes:
     For the purposes of list and tree filtering, "Path" is used as an alias for kml Placemarks with a "LineString" geometry
@@ -88,6 +89,8 @@ def main(argv):
                         help="append file/features from kml to input kml", type=argparse.FileType('r'))
     parser.add_argument("--combine-filter", action="append", default=[], dest='combine_filter', metavar='KML-IDS',
                         help="kml names and/or xpaths of Folder(s) or Placemark(s) to append with main input kml **")
+    parser.add_argument("--debug", action="store_true", default=False,
+                        help="output debug information for developers")
 
     args = parser.parse_args(argv)
 
@@ -110,7 +113,14 @@ def main(argv):
         options.out_nsmap = sys.stderr
         options.out_kml = sys.stdout if options.out_kml is None else options.out_kml
 
-    kmlutil.process(options)
+    options.reraise_errors = options.verbose >= 3
+
+    try:
+        kmlutil.process(options)
+    except kmlutil.KMLError, e:
+        if options.reraise_errors:
+            raise
+        sys.exit(1)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
