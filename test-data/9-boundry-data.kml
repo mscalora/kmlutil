@@ -1,0 +1,522 @@
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document>
+    <name>9-boundry-data.kml</name>
+    <StyleMap id="msn_ylw-pushpin">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#sn_ylw-pushpin0</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#sh_ylw-pushpin</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="sn_ylw-pushpin">
+      <LineStyle>
+        <color>ff00ff00</color>
+        <width>3</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>2600ff00</color>
+      </PolyStyle>
+    </Style>
+    <Style id="hl">
+      <IconStyle>
+        <scale>1.2</scale>
+      </IconStyle>
+      <LineStyle>
+        <color>ffff7320</color>
+        <width>3</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>ff071cff</color>
+        <fill>0</fill>
+      </PolyStyle>
+    </Style>
+    <Style id="sh_ylw-pushpin">
+      <IconStyle>
+        <scale>1.2</scale>
+      </IconStyle>
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>3</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>26071cff</color>
+      </PolyStyle>
+    </Style>
+    <StyleMap id="default">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#default0</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#hl</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="sn_ylw-pushpin0">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>3</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>26071cff</color>
+      </PolyStyle>
+    </Style>
+    <Style id="sh_ylw-pushpin0">
+      <IconStyle>
+        <scale>1.2</scale>
+      </IconStyle>
+      <LineStyle>
+        <color>ff00ff00</color>
+        <width>3</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>2600ff00</color>
+      </PolyStyle>
+    </Style>
+    <Style id="default0">
+      <LineStyle>
+        <color>ffff7320</color>
+        <width>3</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>ff071cff</color>
+        <fill>0</fill>
+      </PolyStyle>
+    </Style>
+    <StyleMap id="msn_ylw-pushpin0">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#sn_ylw-pushpin</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#sh_ylw-pushpin0</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Folder>
+      <name>Boundry-Test-Data</name>
+      <open>1</open>
+      <Placemark>
+        <name>MostlyIn</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="stroke">
+            <value>#ff7d41</value>
+          </Data>
+          <Data name="stroke-width">
+            <value>2</value>
+          </Data>
+          <Data name="stroke-opacity">
+            <value>1</value>
+          </Data>
+          <Data name="fill">
+            <value>#555555</value>
+          </Data>
+          <Data name="fill-opacity">
+            <value>0.1</value>
+          </Data>
+          <Data name="name">
+            <value>MostlyIn</value>
+          </Data>
+        </ExtendedData>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+							-113.0719757080078,39.4208120617938,0 -113.0472564697266,39.4271769994259,0 -113.0204772949219,39.42346418978382,0 -113.0081176757812,39.41285507232951,0 -112.9978179931641,39.39853020265668,0 -112.9998779296875,39.3831409542565,0 -113.0108642578125,39.36827914916011,0 -113.0410766601562,39.36031616648231,0 -113.0781555175781,39.36190883564925,0 -113.0946350097656,39.37305650296729,0 -113.1015014648438,39.38844797503877,0 -113.096694946289,39.40701936950632,0 -113.0870819091797,39.41709891306775,0 -113.0719757080078,39.4208120617938,0 
+						</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark>
+        <name>Complex</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="marker-color">
+            <value>#7e7e7e</value>
+          </Data>
+          <Data name="marker-size">
+            <value>medium</value>
+          </Data>
+          <Data name="marker-symbol">
+				</Data>
+          <Data name="name">
+            <value>Complex</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>-113.0012512207031,39.69714918196742,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Out</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="stroke">
+            <value>#ff2600</value>
+          </Data>
+          <Data name="stroke-width">
+            <value>2</value>
+          </Data>
+          <Data name="stroke-opacity">
+            <value>1</value>
+          </Data>
+          <Data name="fill">
+            <value>#7b2cd6</value>
+          </Data>
+          <Data name="fill-opacity">
+            <value>0.1</value>
+          </Data>
+          <Data name="name">
+            <value>Out</value>
+          </Data>
+        </ExtendedData>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+							-112.9476928710938,39.48284540453334,0 -112.9669189453125,39.44573808044748,0 -112.950439453125,39.41338556654955,0 -112.8934478759766,39.40595828015699,0 -112.8577423095703,39.42611621685508,0 -112.854995727539,39.46323399835131,0 -112.8707885742187,39.49132430037711,0 -112.9140472412109,39.50404070558415,0 -112.9476928710938,39.48284540453334,0 
+						</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark>
+        <name>ExternalSimple</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="marker-color">
+            <value>#7e7e7e</value>
+          </Data>
+          <Data name="marker-size">
+            <value>medium</value>
+          </Data>
+          <Data name="marker-symbol">
+				</Data>
+          <Data name="name">
+            <value>ExternalSimple</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>-113.5361480712891,39.37942579958823,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>In</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="stroke">
+            <value>#ff2600</value>
+          </Data>
+          <Data name="stroke-width">
+            <value>3</value>
+          </Data>
+          <Data name="stroke-opacity">
+            <value>1</value>
+          </Data>
+          <Data name="fill">
+            <value>#004dd6</value>
+          </Data>
+          <Data name="fill-opacity">
+            <value>0.1</value>
+          </Data>
+          <Data name="name">
+            <value>In</value>
+          </Data>
+        </ExtendedData>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+							-113.1777191162109,39.50033199437543,0 -113.1392669677734,39.53582153995038,0 -113.0857086181641,39.52152196404833,0 -113.0527496337891,39.49132430037711,0 -113.0747222900391,39.44520783247914,0 -113.126220703125,39.4303592502534,0 -113.170166015625,39.45687235512798,0 -113.1777191162109,39.50033199437543,0 
+						</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark>
+        <name>Simple</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="marker-color">
+            <value>#7e7e7e</value>
+          </Data>
+          <Data name="marker-size">
+            <value>medium</value>
+          </Data>
+          <Data name="marker-symbol">
+				</Data>
+          <Data name="name">
+            <value>Simple</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>-113.0101776123047,39.60992025700077,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Out</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="stroke">
+            <value>#555555</value>
+          </Data>
+          <Data name="stroke-width">
+            <value>2</value>
+          </Data>
+          <Data name="stroke-opacity">
+            <value>1</value>
+          </Data>
+          <Data name="name">
+            <value>Out</value>
+          </Data>
+        </ExtendedData>
+        <LineString>
+          <coordinates>
+					-113.4386444091797,39.63319206567459,0 -113.4846496582031,39.64799732373418,0 -113.5237884521484,39.6474686190946,0 -113.5594940185547,39.632134425964,0 -113.5903930664062,39.55964762177084,0 -113.5855865478516,39.39853020265668,0 -113.5594940185547,39.36243971730153,0 -113.5176086425781,39.34704251121735,0 -113.4537506103516,39.34704251121735,0 -113.4104919433594,39.36190883564925,0 
+				</coordinates>
+        </LineString>
+      </Placemark>
+      <Placemark>
+        <name>MostlyOut</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="stroke">
+            <value>#7b0c00</value>
+          </Data>
+          <Data name="stroke-width">
+            <value>4</value>
+          </Data>
+          <Data name="stroke-opacity">
+            <value>1</value>
+          </Data>
+          <Data name="fill">
+            <value>#004dd6</value>
+          </Data>
+          <Data name="fill-opacity">
+            <value>0.1</value>
+          </Data>
+          <Data name="name">
+            <value>MostlyOut</value>
+          </Data>
+        </ExtendedData>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+							-113.3596801757812,39.33164191202314,0 -113.3617401123047,39.35129035526705,0 -113.3480072021484,39.36880998239084,0 -113.3212280273438,39.37995654807611,0 -113.2704162597656,39.37624122391557,0 -113.2525634765625,39.36350146850091,0 -113.2422637939453,39.34916646551957,0 -113.2511901855469,39.32261239717688,0 -113.2711029052734,39.30986286213216,0 -113.3074951171875,39.30508118749506,0 -113.338394165039,39.30561250081088,0 -113.3473205566406,39.31517545076218,0 -113.3596801757812,39.33164191202314,0 
+						</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+      <Placemark>
+        <name>MostlyOut</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="stroke">
+            <value>#555555</value>
+          </Data>
+          <Data name="stroke-width">
+            <value>2</value>
+          </Data>
+          <Data name="stroke-opacity">
+            <value>1</value>
+          </Data>
+          <Data name="name">
+            <value>MostlyOut</value>
+          </Data>
+        </ExtendedData>
+        <LineString>
+          <coordinates>
+					-112.9758453369141,39.54270547059901,0 -112.9524993896484,39.56652918886802,0 -112.9470062255859,39.60515915029787,0 -112.9600524902344,39.63372087946617,0 -113.0033111572265,39.65751331590311,0 -113.0403900146484,39.65909918724193,0 -113.0760955810547,39.64799732373418,0 -113.0891418457031,39.63001909803366,0 -113.0898284912109,39.61520999158382,0 -113.0795288085938,39.59933957529531,0 -113.0397033691406,39.59616505553672,0 
+				</coordinates>
+        </LineString>
+      </Placemark>
+      <Placemark>
+        <name>ExternalComplex</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="marker-color">
+            <value>#7e7e7e</value>
+          </Data>
+          <Data name="marker-size">
+            <value>medium</value>
+          </Data>
+          <Data name="marker-symbol">
+				</Data>
+          <Data name="name">
+            <value>ExternalComplex</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>-113.5224151611328,39.60992025700077,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>MostlyIn</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="stroke">
+            <value>#555555</value>
+          </Data>
+          <Data name="stroke-width">
+            <value>2</value>
+          </Data>
+          <Data name="stroke-opacity">
+            <value>1</value>
+          </Data>
+          <Data name="name">
+            <value>MostlyIn</value>
+          </Data>
+        </ExtendedData>
+        <LineString>
+          <coordinates>
+					-113.3995056152344,39.38207950167204,0 -113.4310913085938,39.39057067035076,0 -113.4736633300781,39.4255858195144,0 -113.48876953125,39.44573808044748,0 -113.4983825683594,39.47754556963625,0 -113.4983825683594,39.51145753426751,0 -113.4873962402344,39.55170650354268,0 -113.4571838378906,39.58240712203527,0 -113.4242248535156,39.6056881783208,0 -113.3418273925781,39.63848002167708,0 -113.2786560058594,39.64905472088473,0 
+				</coordinates>
+        </LineString>
+      </Placemark>
+      <Placemark>
+        <name>In</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="marker-color">
+            <value>#7e7e7e</value>
+          </Data>
+          <Data name="marker-size">
+            <value>medium</value>
+          </Data>
+          <Data name="marker-symbol">
+				</Data>
+          <Data name="name">
+            <value>In</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>-113.3823394775391,39.51781418588603,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>In</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="stroke">
+            <value>#555555</value>
+          </Data>
+          <Data name="stroke-width">
+            <value>2</value>
+          </Data>
+          <Data name="stroke-opacity">
+            <value>1</value>
+          </Data>
+          <Data name="name">
+            <value>In</value>
+          </Data>
+        </ExtendedData>
+        <LineString>
+          <coordinates>
+					-113.2855224609375,39.40436661586104,0 -113.3006286621094,39.44891948347229,0 -113.2553100585938,39.46164364205549,0 -113.2965087890625,39.49662308526199,0 -113.2608032226562,39.57076365997469,0 -113.2992553710938,39.6035720419788,0 
+				</coordinates>
+        </LineString>
+      </Placemark>
+      <Placemark>
+        <name>Out</name>
+        <styleUrl>#default</styleUrl>
+        <ExtendedData>
+          <Data name="marker-color">
+            <value>#7e7e7e</value>
+          </Data>
+          <Data name="marker-size">
+            <value>medium</value>
+          </Data>
+          <Data name="marker-symbol">
+				</Data>
+          <Data name="name">
+            <value>Out</value>
+          </Data>
+        </ExtendedData>
+        <Point>
+          <coordinates>-113.1976318359375,39.64006632964755,0</coordinates>
+        </Point>
+      </Placemark>
+      <Folder>
+        <name>InnerArea</name>
+        <open>1</open>
+        <Placemark>
+          <name>SimplePoly</name>
+          <styleUrl>#msn_ylw-pushpin0</styleUrl>
+          <ExtendedData>
+            <Data name="stroke">
+              <value>#942192</value>
+            </Data>
+            <Data name="stroke-width">
+              <value>2</value>
+            </Data>
+            <Data name="stroke-opacity">
+              <value>1</value>
+            </Data>
+            <Data name="fill">
+              <value>#ff40ff</value>
+            </Data>
+            <Data name="fill-opacity">
+              <value>0.15</value>
+            </Data>
+            <Data name="name">
+              <value>SimplePoly</value>
+            </Data>
+          </ExtendedData>
+          <Polygon>
+            <outerBoundaryIs>
+              <LinearRing>
+                <coordinates>
+								-113.5313415527344,39.61838363831913,0 -113.5450744628906,39.3714640880158,0 -113.00537109375,39.36403233804798,0 -112.9916381835938,39.62367272617737,0 -113.5313415527344,39.61838363831913,0 
+							</coordinates>
+              </LinearRing>
+            </outerBoundaryIs>
+          </Polygon>
+        </Placemark>
+      </Folder>
+      <Folder>
+        <name>OuterArea</name>
+        <open>1</open>
+        <Placemark>
+          <name>ComplexPoly</name>
+          <styleUrl>#msn_ylw-pushpin</styleUrl>
+          <ExtendedData>
+            <Data name="stroke">
+              <value>#00f900</value>
+            </Data>
+            <Data name="stroke-width">
+              <value>1.5</value>
+            </Data>
+            <Data name="stroke-opacity">
+              <value>1</value>
+            </Data>
+            <Data name="fill">
+              <value>#00fdff</value>
+            </Data>
+            <Data name="fill-opacity">
+              <value>0.05</value>
+            </Data>
+            <Data name="name">
+              <value>ComplexPoly</value>
+            </Data>
+          </ExtendedData>
+          <Polygon>
+            <outerBoundaryIs>
+              <LinearRing>
+                <coordinates>
+								-113.1214141845703,39.62631711852431,0 -113.1138610839844,39.74943369178244,0 -113.6453247070312,39.74309828694827,0 -113.6398315429688,39.27851037939807,0 -112.8014373779297,39.27478966170308,0 -112.8014373779297,39.70824314819603,0 -113.0898284912109,39.70718665682656,0 -113.0962181564955,39.62376423264656,0 -112.9925543183803,39.62472092384871,0 -113.0058527833036,39.36389935321395,0 -113.5433395076673,39.37230153449677,0 -113.5360965467031,39.62197229362765,0 -113.1214141845703,39.62631711852431,0 
+							</coordinates>
+              </LinearRing>
+            </outerBoundaryIs>
+          </Polygon>
+        </Placemark>
+      </Folder>
+    </Folder>
+  </Document>
+</kml>

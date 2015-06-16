@@ -1,0 +1,27 @@
+
+X    dump path
+
+    optimize path
+
+X    optimize_coordinates
+
+X    boundry_folders
+
+X    multi_flatten
+
+X    remove_all_styles
+
+n/a    area of polygon?
+
+X    dump_namespace_table
+
+X    validate_styles ???
+
+X   combine_kml
+
+    verbose > 3
+
+    Error case
+        invalid xpath
+
+        multies warning

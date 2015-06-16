@@ -4,6 +4,7 @@ import unittest
 from utils4test import *
 from scripttest import TestFileEnvironment
 from lxml import objectify, etree as lxml_et
+import utils4test
 
 env = TestFileEnvironment('../scratch', cwd='..')
 
@@ -30,6 +31,13 @@ class TestFromCommandLine(unittest.TestCase):
             assert counts.Polygon.post_count == 0
             assert counts.Folder.post_count == 0
 
+    def test_serialize_names(self):
+        env.clear()
+
+        result = env.run('kmlutil --list test-data/3-large-google-earth.kml --serialize-names')
+
+        self.assertNotRegexpMatches(result.stdout, ur'^Path\s*Path$|^Untitled Path\s*Path$')
+
     def test_extract(self):
         env.clear()
         # { file-name: { KML_ID-to-extract: { [ tag: post_count,...]},...},...}
@@ -55,6 +63,21 @@ class TestFromCommandLine(unittest.TestCase):
                           (tag, counts[tag].post_count, count, flatten(kml_id), file_name, cmd)
                     self.assertEqual(counts[tag].post_count, count, msg=msg, )
 
+    def test_dump_namespace(self):
+        env.clear()
+
+        result = env.run('kmlutil test-data/A-folderize-acid-test.kml --namespaces')
+
+        self.assertRegexpMatches(result.stdout, ur'kml\s.*www\.opengis\.net/kml/2\.2')
+
+    def test_combine(self):
+        env.clear()
+
+        result = env.run('kmlutil test-data/0-test-misc.kml --combine test-data/1-test-hand-edit.kml --stats --stats-format json -vvvvv', expect_stderr=True)
+
+        counts = utils4test.stats_counts_to_dict(result.stdout)
+
+        self.assertLess(counts.Placemark.pre_count, counts.Placemark.post_count)
 
 if __name__ == '__main__':
     unittest.main()

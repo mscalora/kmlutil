@@ -43,6 +43,11 @@ class CapturingStderr(list):
         sys.stderr = self._stderr
 
 
+def nice_num(number):
+    s = unicode(number)
+    return s.rstrip('0').rstrip('.') if '.' in s else s
+
+
 def encode_xpath_string_literal(s):
     if "'" not in s: return "'%s'" % s
     if '"' not in s: return '"%s"' % s
@@ -72,7 +77,8 @@ def chain(el, attr_chain, cache=None):
             els = xp(it, attr[1:-1])
             if len(els) == 0:
                 it = None
-            it = els[0]
+            else:
+                it = els[0]
         elif attr == '@':
             it = get_by_id(el.getroottree(), str(it).lstrip('#'), cache=cache)
         elif hasattr(it, attr):
@@ -87,5 +93,5 @@ def chain(el, attr_chain, cache=None):
 
 def xp(el, xpath):
     if _verbose > 2:
-        print('xpath={xpath} on {tag}[{el}]'.format(xpath=xpath, tag=el.tag.split('}')[-1], el=el.getroottree().getpath(el)), file=sys.stderr)
+        pass # print('xpath={xpath} on {tag}[{el}]'.format(xpath=xpath, tag=el.tag.split('}')[-1], el=el.getroottree().getpath(el)), file=sys.stderr)
     return el.xpath(xpath, namespaces=dict({'kml': 'http://www.opengis.net/kml/2.2'}, **{k: v for k, v in el.nsmap.items() if k is not None}))
