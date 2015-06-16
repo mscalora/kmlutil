@@ -17,14 +17,14 @@ from ordered_set import OrderedSet as oSet
 placemark_name_and_type_xpath = \
     ur'.//kml:Placemark[kml:{type} and kml:name[text()={name}]]'
 placemark_2name_and_type_xpath = \
-    ur'.//*[local-name()="Placemark" and *[local-name()="name" and (text()="%s" or text()="%s")] and *[local-name()="%s"]]'
+    ur'.//kml:Placemark[kml:{type} and kml:name[text()={name1} or text()={name2}]]'
+#    ur'.//*[local-name()="Placemark" and *[local-name()="name" and (text()="%s" or text()="%s")] and *[local-name()="%s"]]'
 placemark_type_xpath = \
     ur'.//*[local-name()="Placemark" and *[local-name()="%s"]]'
 folder_by_name = \
     ur'.//*[local-name()="Folder" and *[local-name()="name" and normalize-space(text())={name}]]'
 folder_or_placemark_by_name = \
-    ur'.//*[(local-name()="Folder" or local-name()="Placemark") and *[local-name()="name" ' \
-    ur'and normalize-space(text())={name}]]'
+    ur'.//*[(local-name()="Folder" or local-name()="Placemark") and kml:name[normalize-space(text())={name}]]'
 folder_or_placemark_by_name_starts_with = \
     ur'.//*[(local-name()="Folder" or local-name()="Placemark") and *[local-name()="name" ' \
     ur'and starts-with(normalize-space(text()),{part0})]]'
@@ -72,12 +72,12 @@ defaults = AttrDict({
     'filter': None,
     'no_kml_out': False,
     'list_detail': False,
-    'folderize': False,
+    'folderize': [],
     'folderize_limit': 0.35,
     'serialize_names': False,
     'delete_styles': False,
     'paths_only': False,
-    'demulti_paths': False,
+    'multi_flatten': False,
     'dump': [],
     'extract': [],
     'delete': [],
@@ -102,9 +102,9 @@ alias_map = {
     'Polygon': ['Polygon', 'Area']
 }
 
-all_polygon_names = '//*[local-name()="Placemark" and *[local-name()="Polygon"]]/*[local-name()="name"]/text()'
-all_elementX_names = '//*[local-name()="Placemark" and *[local-name()="%s"]]/*[local-name()="name"]/text()'
-all_style_data = '//*[local-name()="Style" or local-name()="StyleMap"]|//*[local-name()="Placemark"]/*[local-name()="styleUrl"]'
+all_polygon_names = ur'//*[local-name()="Placemark" and *[local-name()="Polygon"]]/*[local-name()="name"]/text()'
+all_elementX_names = ur'//*[local-name()="Placemark" and *[local-name()="%s"]]/*[local-name()="name"]/text()'
+all_style_data = ur'//*[local-name()="Style" or local-name()="StyleMap"]|//*[local-name()="Placemark"]/*[local-name()="styleUrl"]'
 
 
 class KMLError(Exception):
@@ -178,14 +178,14 @@ class Placemark:
         joined_coords_list = " ".join(coords_list).strip()
         if len(coords_list) == 0 or joined_coords_list == '':
             if raise_on_failure:
-                print("Feature does not contain any coordinates '%s'" % self.get_name(default='<unnamed>'), file=out_diag)
+                print(u"Feature does not contain any coordinates '%s'" % self.get_name(default='<unnamed>'), file=out_diag)
                 raise KMLError("Feature coordinates not found")
             self.__dict__['coordinates'] = None
         elif hasattr(self.placemark_element, "MultiGeometry") and not self.is_multi_polygon() and not self.is_multi_path():
             if raise_on_failure:
-                print("Unexpected MultiGeometry element %s " % self.get_alias(), file=out_diag)
+                print(u"Unexpected MultiGeometry element %s " % self.get_alias(), file=out_diag)
                 print(lxml_etree.tostring(self.__dict__, pretty_print=True))
-                raise KMLError("Feature coordinates not available for this type of MultiGeometry feature")
+                raise KMLError(u"Feature coordinates not available for this type of MultiGeometry feature")
             self.__dict__['coordinates'] = None
         else:
             self.__dict__['coordinates'] = parse_coords(joined_coords_list)
@@ -358,28 +358,169 @@ class Placemark:
         return None if element_list is None or len(element_list) == 0 else Placemark(element_list[0])
 
 
-def find_boundry_folders(kml_doc):
+class ComplexBoundry(object):
+    def __init__(self, outer_boundries, inner_boundries):
+        self.boundries = []
+        for boundry in outer_boundries:
+            self.boundries.append(AttrDict({
+                'min_x': min(a[0] for a in boundry),
+                'min_y': min(a[1] for a in boundry),
+                'max_x': max(a[0] for a in boundry),
+                'max_y': max(a[1] for a in boundry),
+                'coords': boundry,
+                'factor': 1
+            }))
+        for boundry in inner_boundries:
+            self.boundries.append(AttrDict({
+                'min_x': min(a[0] for a in boundry),
+                'min_y': min(a[1] for a in boundry),
+                'max_x': max(a[0] for a in boundry),
+                'max_y': max(a[1] for a in boundry),
+                'coords': boundry,
+                'factor': -1
+            }))
+
+    def is_point_in(self, x, y):
+        total = 0
+        for boundry in self.boundries:
+            if x < boundry.min_x or x > boundry.max_x or y < boundry.min_y or y > boundry.max_y:
+                continue
+            total += boundry.factor if is_point_inside(x, y, boundry.coords) else 0
+        return total > 0
+
+
+def is_point_inside(x, y, c):
+    n = len(c)
+    inside = False
+    xints = 0
+
+    p1x, p1y = c[0][0:2]
+    for i in range(n + 1):
+        p2x, p2y = c[i % n][0:2]
+        if y > min(p1y, p2y):
+            if y <= max(p1y, p2y):
+                if x <= max(p1x, p2x):
+                    if p1y != p2y:
+                        xints = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                    if p1x == p2x or x <= xints:
+                        inside = not inside
+        p1x, p1y = p2x, p2y
+
+    return inside
+
+
+def get_kml_name(element):
+    return element.name if hasattr(element, 'name') else None
+
+
+def find_boundry_folders(doc, folder_kmlids):
     folder_list = []
 
-    for folder in kml_doc.xpath("//*[local-name()='Folder' and *[local-name()='Placemark' and *[local-name()='name' and text()='Boundry']]]"):
-        polygon = folder.xpath("*[local-name()='Placemark' and *[local-name()='name' and text()='Boundry']]")[0]
-        coords_text = folder.xpath("*[local-name()='Placemark' and *[local-name()='name' and text()='Boundry']]//*[local-name()='coordinates']/text()")[0]
+    for folder in list_nodes(doc, folder_kmlids):
+        polygon_list = util.xp(folder, ur'kml:Placemark[kml:Polygon or kml:MultiGeometry/kml:Polygon]')
+        polygon = polygon_list[0] if len(polygon_list) else None
 
-        folder_list.append(AttrDict({
-            'name': folder.name.text,
-            'element': folder,
-            # 'coords': parse_coords(coords_text),
-            'polygon': Placemark(polygon),
-            'area': area_of_polygon(parse_coords(coords_text))
-        }))
+        if polygon is not None:
+            folder_info = AttrDict({
+                'name': get_kml_name(folder),
+                'element': folder,
+                'polygon': polygon,
+                'outer': [],
+                'inner': []
+            })
+
+            outer_coords_list = util.xp(polygon, ur'.//kml:Polygon/kml:outerBoundaryIs//kml:coordinates/text()')
+            inner_coords_list = util.xp(polygon, ur'.//kml:Polygon/kml:innerBoundaryIs//kml:coordinates/text()')
+
+            area = 0.0
+            for outer in outer_coords_list:
+                coords = parse_coords(outer)
+                area += area_of_polygon(coords)
+                folder_info.outer.append(coords)
+
+            for inner in inner_coords_list:
+                coords = parse_coords(inner)
+                area -= area_of_polygon(coords)
+                folder_info.inner.append(coords)
+
+            folder_info.complex = ComplexBoundry(folder_info.outer, folder_info.inner)
+
+            folder_list.append(folder_info)
+
+    if len(folder_list) == 0:
+        print('Error: folderize folder list is empty', file=out_diag)
+
     return folder_list
+
+
+def folderize(doc, folder_kmlids, limit):
+
+        if args.verbose > 3:
+            print("{name:20s} {place:20s} {inout:6s} {per:7s}   {dump:s}".format(
+                name="Boundry",
+                place="Placemark",
+                inout="in/out",
+                per="Contain",
+                dump="Deatil (begins, ends, any, all,count,total,seg)"),
+                file=out_diag)
+
+            print("{name:20s} {place:20s} {inout:6s} {per:7s}   {dump:s}".format(
+                name="-" * 20,
+                place="-" * 20,
+                inout="-" * 6,
+                per="-" * 7,
+                dump="-" * 47),
+                file=out_diag)
+
+        folders = find_boundry_folders(doc, folder_kmlids)
+
+        boundry_map = {}
+
+        for folder in folders:
+            boundry_map[folder.polygon] = True
+            folder.new_children = []
+
+        points = 0
+
+        els = util.xp(doc, all_placemarks)
+        for el in els:
+            if el in boundry_map:
+                continue
+
+            coords_text = " ".join(util.xp(el, ur'.//kml:coordinates/text()'))
+            coords = parse_coords(coords_text)
+
+            points += len(coords)
+
+            in_folders = []
+            for folder in folders:
+                bounds = folder.complex
+
+                points_in = 0
+                for point in coords:
+                    points_in += 1 if bounds.is_point_in(point[0],point[1]) else 0
+
+                if points_in:
+                    in_folders.append([float(points_in) / len(coords), folder])
+
+            if len(in_folders):
+                ratio, folder = max(in_folders)
+                if ratio >= limit:
+                    folder.element.append(el)
+                    folder.new_children.append(el)
+
+        if args.verbose >= 1:
+            msg = "Folderization processed {placemarks:d} placemarks with {points:d} coordinates against {folders:d} folders"
+            print(msg.format(placemarks=len(els), points=points, folders=len(folders)), file=out_diag)
+            for folder in folders:
+                print("Folder: '{name:s}' children appended: {appended:d}".format(name=folder.name, appended=len(folder.new_children)), file=out_diag)
 
 
 def count_points(element):
     count = 0
     tag = util.tag(element)
-    if tag == "Document" or tag == "LineString" or tag == "Polygon" or tag == "Point":
-        coords = util.xp(element, './/kml:coordinates/text()')
+    if tag == "Document" or tag == "LineString" or tag == "LinearRing" or tag == "Polygon" or tag == "Point":
+        coords = util.xp(element, ur'.//kml:coordinates/text()')
         for coord in coords:
             count += len(coord.strip().split())
     return count
@@ -413,31 +554,31 @@ def extract_nodes(doc, kml_ids):
     nodes = list_nodes(doc, kml_ids)
 
     if args.verbose > 1:
-            print("Located %d features to extract" % len(nodes), file=out_diag)
+        print("Located %d features to extract" % len(nodes), file=out_diag)
 
     all_top_level = doc.xpath(top_level_folder_or_placemarks)
 
     for node in reversed(all_top_level):
         node.getparent().remove(node)
 
-    document_element = doc.xpath(ur'/*/*[local-name()="Document"]')[0]
+    document_element = util.xp(doc, ur'/*/kml:Document')[0]
 
     for node in nodes:
         document_element.append(node)
 
 
-def demulti_paths(doc):
+def multi_flatten(doc):
 
     # all the multi-segment linestrings
-    multis = doc.xpath(ur'//*[local-name()="Placemark"][*[local-name()="MultiGeometry"]/*[local-name()="LineString"]]')
+    multis = util.xp(doc, ur'//kml:Placemark[kml:MultiGeometry/kml:LineString]')
 
     for multi in reversed(multis):
 
         # all the segments in each placemark
-        segments = multi.xpath(ur'.//*[local-name()="LineString"]')
+        segments = util.xp(multi, ur'.//kml:LineString')
 
         # the MultiGeometry node
-        geometry = multi.xpath(ur'./*[local-name()="MultiGeometry"]')[0]
+        geometry = util.xp(multi, ur'kml:MultiGeometry')[0]
         multi.remove(geometry)
 
         # if there is more than one segment (not typical), get ready to make copies
@@ -449,23 +590,23 @@ def demulti_paths(doc):
             index = parent.index(multi)
             base_name = multi.name if hasattr(multi, "name") else None
 
-            for i in reversed(range(0, len(segments))):
-                if i == 0:
-                    # use the original placemark for the first segment
-                    multi.append(segments[i])
-                else:
-                    # use copies of it for subsequent segments
-                    node = copy if i == 1 else deepcopy(copy)
-                    # append the linestring to the placemark node
-                    node.append(segments[i])
-                    # insert it so that they come out in the same order
-                    parent.insert(index+1, node)
-                    # serialize the names
-                    node.name = objectify.StringElement("%s part %s" % (base_name, i+1))
+        for i in reversed(range(0, len(segments))):
+            if i == 0:
+                # use the original placemark for the first segment
+                multi.append(segments[i])
+            else:
+                # use copies of it for subsequent segments
+                node = copy if i == 1 else deepcopy(copy)
+                # append the linestring to the placemark node
+                node.append(segments[i])
+                # insert it so that they come out in the same order
+                parent.insert(index+1, node)
+                # serialize the names
+                node.name = objectify.StringElement("%s part %s" % (base_name, i+1))
 
 
 def paths_only(doc):
-    paths = doc.xpath(all_placemark_paths)
+    paths = util.xp(doc, all_placemark_paths)
 
     if args.verbose > 1:
             print("Located %d paths" % len(paths), file=out_diag)
@@ -504,7 +645,7 @@ def doc_stats(doc, points=False):
     stats_map = {}
     predicate = ur'translate(substring(local-name(),1,1),"abcdefghijkmlnopqrstuvwxyz","ABCDEFGHIJKMLNOPQRSTUVWXYZ")=substring(local-name(),1,1)'
     all_uppercase = ur'//*[' + predicate + ']'
-    all_with_coords = ur'//*[' + predicate + ' and .//kml:coordinates]'
+    all_with_coords = ur'//*[' + predicate + ur' and .//kml:coordinates]'
     for el in util.xp(doc, all_with_coords if points else all_uppercase):
         tag = util.tag(el)
         if tag not in stats_map:
@@ -521,12 +662,11 @@ def list_filter(tag, filter_list):
 def lister(element, filter_list, tree=False, indent=0, recursive=True, children_only=False):
     node_list = []
 
-    for el in element.xpath('*[local-name()="Document" or local-name()="Folder" or local-name()="Placemark"]'):
+    for el in util.xp(element, ur'kml:Document|kml:Folder|kml:Placemark'):
         el_tag = el.tag.split('}')[-1]
-        name_ref = el.xpath('*[local-name()="name"]/text()')
-        name = 'UNNAMED' if len(name_ref) == 0 else name_ref[0]
-        type_list = el.xpath(ur'*[local-name()="Polygon" or local-name()="Point" or local-name()="LineString"] | ' +
-                             ur'*/*[local-name()="Polygon" or local-name()="Point" or local-name()="LineString"]')
+        name = unicode(el.name if hasattr(el, 'name') else u'UNNAMED')
+        type_list = util.xp(el, ur'kml:LineString|kml:Point|kml:Polygon|kml:LinearRing|kml:MultiGeometry/kml:LineString|' +
+                            'kml:MultiGeometry/kml:Point|kml:MultiGeometry/kml:Polygon|kml:MultiGeometry/kml:LinearRing')
         if el_tag in ['Folder', 'Document']:
             type_tag = el_tag
         elif len(type_list) == 0:
@@ -536,13 +676,13 @@ def lister(element, filter_list, tree=False, indent=0, recursive=True, children_
         node_item = None
         if not children_only and list_filter(type_tag, filter_list):
             node_item = AttrDict({
-                'name': str(name),
+                'name': name,
                 'type': list_type_mapper(type_tag),
                 'indent': indent,
                 'el': el
             })
-            if args.list_detail and node_item.type == 'Path':
-                els = el.xpath('.//*[local-name()="coordinates"]/text()')
+            if args.list_detail and (node_item.type == 'Path' or node_item.type == 'Polygon'):
+                els = util.xp(el, ur'.//kml:coordinates/text()')
                 if els is not None and len(els):
                     coords = parse_coords(els[0])
                     if len(coords) > 1:
@@ -566,6 +706,20 @@ def kml_id_to_xpath(kml_id):
 
     if kml_id.startswith(('.', '/')):
         return kml_id
+    elif kml_id.startswith('@'):
+        name = kml_id[1:]
+        if name == 'Path':
+            name = 'LineString'
+        elif name == 'Waypoint':
+            name = 'Point'
+        if name == 'Folder':
+            return './/kml:Folder'
+        elif name in ['Point', 'Polygon', 'LineString', 'LinearRing', 'MultiGeometry', 'Model']:
+            return ur'.//*[kml:{type:s}]'.format(type=name)
+        elif name in ['Folder']:
+            return ur'.//kml:Folder'
+        print("WARNING: unknown feature type '%s'" % name, file=out_diag)
+        return 'UNKNOWN_FEATURE_TYPE'
     elif kml_id.startswith('&'):
         return folder_or_placemark_by_name.format(name=encode4xpath(kml_id[1:]))
     elif kml_id.startswith('%'):
@@ -589,7 +743,18 @@ def list_nodes(doc, kml_ids):
     else:
         xpaths = [kml_id_to_xpath(kml_ids)]
 
-    nodes = doc.xpath('|'.join(xpaths))
+    try:
+        nodes = util.xp(doc, '|'.join(xpaths))
+    except lxml_etree.XPathEvalError, e:
+        print("KMLUTIL ERROR: invalid xpath expression", file=out_diag)
+        if args.debug:
+            print("DEBUG: Expression '%s'" % xpaths, file=out_diag)
+            for attr in ['level_name', 'file', 'line', 'column', 'type_name']:
+                if hasattr(e.error_log.last_error, attr):
+                    print("DEBUG:     %s: %s" % (attr, repr(getattr(e.error_log.last_error, attr))), file=out_diag)
+        if args.reraise_errors:
+            raise
+        raise KMLError("Error evaluating xpath expression")
     return nodes
 
 
@@ -679,12 +844,12 @@ def print_list(doc, filter_list, tree=False, xpaths=False, list_format='text', o
                 name_len = len(node.name) + (node.indent * 2 if tree else 0)
             type_len = len(node.type) if len(node.type) > type_len else type_len
 
-        line = "{name:<{name_width:d}s} {type:<{type_width:d}s}"
+        line = u"{name:<{name_width:d}s} {type:<{type_width:d}s}"
 
         for node in node_list:
-            name = ("  " * node.indent if tree else '') + node.name
+            name = (u"  " * node.indent if tree else u'') + node.name
             if args.list_detail and 'length' in node:
-                detail = line + " {count:6d} {length:7.2f}km {rate:7.2f}m/pt" + (" {xpath:s}" if xpaths else "")
+                detail = line + u" {count:6d} {length:7.2f}km {rate:7.2f}m/pt" + (u" {xpath:s}" if xpaths else u"")
                 rate = node.length / node.count * 1000 if node.count > 0 else 0.0
                 model = {
                     "name_width": name_len,
@@ -694,12 +859,19 @@ def print_list(doc, filter_list, tree=False, xpaths=False, list_format='text', o
                     "count": node.count,
                     "length": node.length,
                     "rate": rate,
-                    "xpath": etree.getpath(node.el) if xpaths else ""
+                    "xpath": etree.getpath(node.el) if xpaths else u""
                 }
                 preprint(detail.format(**model), out_file=out_list)
             else:
-                simple = line + (" {xpath:s}" if xpaths else "")
-                preprint(simple.format(name_width=name_len, name=name, type=node.type, type_width=type_len), out_file=out_list)
+                simple = line + (u" {xpath:s}" if xpaths else u"")
+                model = {
+                    "name_width": name_len,
+                    "name": name,
+                    "type": node.type,
+                    "type_width": type_len,
+                    "xpath": etree.getpath(node.el) if xpaths else u""
+                }
+                preprint(simple.format(**model), out_file=out_list)
 
         preprint(None)
 
@@ -766,19 +938,19 @@ def get_sig(el, style_info=None):
 
 
 def optimize_styles(doc):
-    styles = doc.xpath("//*[local-name()='Style' and @id]")
+    styles = doc.xpath(ur"//*[local-name()='Style' and @id]")
     style_detail = args.verbose > 4
     for el in styles:
         get_sig(el, style_dir)
         if style_detail:
-            print('%30s - %s' % (el.attrib['id'], get_sig(el, style_dir)), file=out_diag)
-    styles = doc.xpath("//*[local-name()='StyleMap' and @id]")
+            print(ur'%30s - %s' % (el.attrib['id'], get_sig(el, style_dir)), file=out_diag)
+    styles = doc.xpath(ur"//*[local-name()='StyleMap' and @id]")
     for el in styles:
         get_sig(el, style_dir)
         if style_detail:
-            print('%30s - %s' % (el.attrib['id'], get_sig(el, style_dir)), file=out_diag)
+            print(ur'%30s - %s' % (el.attrib['id'], get_sig(el, style_dir)), file=out_diag)
     if style_detail:
-        print('Styles:%d uniques:%d' % (len(style_dir['styles']), len(style_dir['uniques'])))
+        print(ur'Styles:%d uniques:%d' % (len(style_dir['styles']), len(style_dir['uniques'])), file=out_diag)
 
     style_dir.ids = {str(idattr): True for idattr in doc.xpath(ur"//*[local-name()!='StyleMap' and local-name()!='Style']/@id")}
 
@@ -802,7 +974,7 @@ def optimize_styles(doc):
             xparent = xel.getparent()
             if xparent is not None:
                 xparent.remove(xel)
-    for el in doc.xpath("//*[*[local-name()='styleUrl']]"):
+    for el in doc.xpath(ur"//*[*[local-name()='styleUrl']]"):
         oldid = el.styleUrl.text[1:]
         el.styleUrl = objectify.StringElement('#' + style_dir.old2new[oldid])
 
@@ -828,7 +1000,7 @@ def read_namespaces(filepath_or_url, root_element='kml', peek_length=10240):
     match = re.search(r'<%s([^>]*)>' % re.escape(root_element), beginning)
 
     if match is None:
-        raise TypeError("Expected element with the tag %s but didn't find one in the first %d bytes of the file." % (root_element, peek_length))
+        raise TypeError(ur"Expected element with the tag %s but didn't find one in the first %d bytes of the file." % (root_element, peek_length))
 
     return dict([(m.group(1), m.group(2)) for m in re.finditer(r'\w+(?::(\w+))?="([^"]*)"', match.group(0))])
 
@@ -859,19 +1031,14 @@ def dump_namespace_table(namespaces_dict, outfile=sys.stdout, prefix_title='Pref
             raise NotImplemented("namespace table format of '%s' not implemented" % table_format)
 
 
-all_placemark_paths_old = '//*[local-name()="Placemark" and *[local-name()="LineString"]]'
-all_placemark_paths = '//*[local-name()="Placemark" and (*[local-name()="LineString"] or *[local-name()="MultiGeometry" and *[local-name()="LineString"]])]'
-all_placemarks = '//*[local-name()="Placemark"]'
+all_placemark_paths = ur'//kml:Placemark[kml:LineString or kml:MultiGeometry[kml:LineString]]'
+all_placemarks = ur'//kml:Placemark'
+all_placemarks_no_ns = ur'//*[local-name()="Placemark"]'
 
 
 def export_geojson(doc, out_file=None, pretty=False):
 
-    # def add(node, ):
-    #     return node.coords;
-    #
-    # top = doc.xpath('//*[local-name()="Document"]')
-
-    paths = doc.xpath(all_placemark_paths)
+    paths = util.xp(doc, all_placemark_paths)
     cache = {}
 
     geo = {
@@ -1038,7 +1205,7 @@ def get_path_style_stats(doc):
     path_style_map = {}
     cache = {}
 
-    for idx, el in enumerate(doc.xpath(all_placemark_paths)):
+    for idx, el in enumerate(util.xp(doc, all_placemark_paths)):
         place = Placemark(el, doc)
         if not place.has_coords():
             continue
@@ -1062,6 +1229,7 @@ def process(options):
 
     args = options
     if args.verbose > 0:
+        # print('Setting util verbosity to '+repr(args.verbose), file=out_diag)
         util.set_verbosity(args.verbose)
 
     # error messages and 'verbose' output
@@ -1102,8 +1270,8 @@ def process(options):
     if args.combine:
         combine_kml(kml_doc, args.combine, args.combine_filter)
 
-    if args.demulti_paths:
-        demulti_paths(kml_doc)
+    if args.multi_flatten:
+        multi_flatten(kml_doc)
 
     if args.extract:
         extract_nodes(kml_doc, args.extract)
@@ -1124,7 +1292,9 @@ def process(options):
         i = 0
         if v1:
             print("PROGRESS: rename paths that are named 'Path' or 'Untitled Path' to add a serial number at least", file=out_diag)
-        for element in kml_doc.xpath(placemark_2name_and_type_xpath % ("Path", "Untitled Path", "LineString")):
+        for element in util.xp(kml_doc, placemark_2name_and_type_xpath.format(name1="'Path'",
+                                                                              name2="'Untitled Path'",
+                                                                              type="LineString")):
             element.name = objectify.StringElement("Path %d" % i)
             i += 1
 
@@ -1173,7 +1343,7 @@ def process(options):
         if v2:
             print("PROGRESS: comparing all Placemark elements against region", file=out_diag)
 
-        for el in kml_doc.xpath(all_placemarks):
+        for el in util.xp(kml_doc, all_placemarks):
             placemark = Placemark(el, kml_doc)
             if v3 and not v5:
                 print("TRACE: Element '%s' with %d coordinates" % (placemark.name, len(placemark.coordinates)), file=out_diag)
@@ -1196,7 +1366,7 @@ def process(options):
 
     else:
         if args.optimize_paths:
-            for el in kml_doc.xpath(all_placemark_paths):
+            for el in util.xp(kml_doc, all_placemark_paths):
                 placemark = Placemark(el, kml_doc)
                 if placemark.is_path_or_multipath():
                     if args.optimize_paths:
@@ -1272,63 +1442,8 @@ def process(options):
                 'path_style_counts': path_types
             }, indent=4), file=out_stats)
 
-    if args.folderize:
-
-        if args.verbose > 3:
-            print("{name:20s} {place:20s} {inout:6s} {per:7s}   {dump:s}".format(
-                name="Boundry",
-                place="Placemark",
-                inout="in/out",
-                per="Contain",
-                dump="Deatil (begins, ends, any, all,count,total,seg)"),
-                file=out_diag)
-
-            print("{name:20s} {place:20s} {inout:6s} {per:7s}   {dump:s}".format(
-                name="-" * 20,
-                place="-" * 20,
-                inout="-" * 6,
-                per="-" * 7,
-                dump="-" * 47),
-                file=out_diag)
-
-        folders = find_boundry_folders(kml_doc)
-
-        for el in kml_doc.xpath(all_placemarks):
-
-            placemark = Placemark(el, kml_doc)
-
-            if placemark.is_path() or placemark.is_point() or (placemark.is_polygon() and placemark.get_name() != 'Boundry'):
-
-                max_folder = None
-                max_ratio = 0
-                max_area = 0
-
-                for folder in folders:
-
-                    inness = placemark.in_region(folder.polygon, detail=True)
-                    if inness is False:
-                        continue
-                    ratio = 0.0 if inness[5] == 0 else inness[4] / float(inness[5])
-
-                    if ratio > args.folderize_limit and (ratio > max_ratio or (ratio == max_ratio and folder.area < max_area)):
-                        max_folder = folder
-                        max_ratio = ratio
-                        max_area = folder.area
-
-                    if args.verbose > 3:
-                        print("{name:20.20s} {place:20.20s} {inout:6s} {per:6.2f}%   {dump:s}".format(
-                            name=folder.name,
-                            place=placemark.get_name(),
-                            inout="IN" if inness[3] else "out",
-                            per=ratio * 100.0,
-                            dump=str(inness)),
-                            file=out_diag)
-
-                if max_folder:
-                    if args.verbose > 3:
-                        print("Moving into: " + max_folder.name, file=out_diag)
-
-                    max_folder.element.append(placemark.placemark_element)
+    if len(args.folderize):
+        folderize(kml_doc, args.folderize, args.folderize_limit)
 
     if args.optimize_styles:
         objectify.deannotate(kml_doc, xsi_nil=True)

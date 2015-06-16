@@ -12,9 +12,24 @@ defaults = kmlutil.defaults
 def main(argv):
     parser = argparse.ArgumentParser(epilog="""Notes:
     For the purposes of list and tree filtering, "Path" is used as an alias for kml Placemarks with a "LineString" geometry
-    and "Point", "Waypoint" and "Placemark" are all aliases for kml Placemarks with a "Point" geometry
+    and "Waypoint" is an aliases for kml Placemarks with a "Point" geometry
 
-    ** option may be used more than once for multiple values
+    KML-IDS may be a feature name, xpath expression (begins with '.' or '/'), feature names that begin with '.', '/', '&', '%' or '@'
+    should be prefixed with '&'. Use a prefix of '%' to enable special meaning of '*' for a wildcard in feature names. Use '@' for
+    feature types like '@Point' or '@Path'
+
+    kmlutil my_big.kml --rename 'Sunflower Tr.' 'Sunflower Trail'
+
+    kmlutil my_big.kml --list --extract '%* Trail'
+
+    kmlutil my_big.kml --dump-path '/*/*/*[kml:name="Trails"/*[3]'
+
+    kmlutil my_big.kml --list --extract @Path --extract '%*Trail'
+
+    An attempt is made to deal with MultiGeometry features as if the first Point, Polygon or LineString was the feature but your
+    results may improve by using --flatten
+
+    \n\n** option may be used more than once for multiple values
     """)
 
     parser.add_argument("kmlfile",
@@ -55,16 +70,17 @@ def main(argv):
                         help="list names of features in a flat list, see --filter")
     parser.add_argument("--list-format", action="store", choices=['json', 'text'], default=defaults.list_format,
                         help="list format, 'json' or the default '%s'" % defaults.list_format)
-    parser.add_argument("--list-detail", "--list-details", action="store_true",
+    parser.add_argument("--list-details", dest="list_detail", action="store_true",
                         help="include node detail info in listing")
-    parser.add_argument("--list-with-xpaths", "--list-with-xpath", action="store_true",
+    parser.add_argument("--list-with-xpaths", action="store_true",
                         help="include node specific xpaths in list output")
     parser.add_argument("--list-only", action="append", default=[], metavar='KML-IDS',
                         help="name(s) of Folder or Placemark to list **")
-    parser.add_argument("--folderize", action="store_true",
-                        help="move paths and points into folders if they contained in a 'Boundry' polygon child of folder")
+    parser.add_argument("--folderize", action="append", default=[], metavar='KML-IDS',
+                        help="folder to move paths and points into using first contained polygon")
+    limit = {"dec": nice_num(defaults.folderize_limit), "per": nice_num(defaults.folderize_limit*100)}
     parser.add_argument("--folderize-limit", action="store", type=float, default=defaults.folderize_limit,
-                        help="minimum ratio of point in boundy to be moved into, default %f" % defaults.folderize_limit)
+                        help="minimum ratio of point in boundy to be moved into, default {dec:s}, (e.g. {per:s}%% of the points must be within the boundry)".format(**limit))
     parser.add_argument("--serialize-names", action="store_true",
                         help="add serial numbers to paths with the default name Path")
     parser.add_argument("--dump-path", action="append", default=[], metavar='KML-IDS',
@@ -79,8 +95,8 @@ def main(argv):
                         help="kml names and/or xpaths of Folder(s) or Placemark(s) to keep, all other's will be deleted ** extracting folders will keep all descendants")
     parser.add_argument("--geojson", action="store_true",
                         help="output GeoJSON instead of KML")
-    parser.add_argument("--demulti-paths", action="store_true",
-                        help="convert multisegment paths to a normal path")
+    parser.add_argument("--multi-flatten", action="store_true",
+                        help="convert MultiGeometry features like multisegment paths to normal single geomentry features")
     parser.add_argument("--validate-styles", action="store_true",
                         help="validate all style id references")
     parser.add_argument("--rename", action="append", default=[], nargs=2, metavar=('KML-ID', 'NEW-NAME'),
@@ -91,6 +107,8 @@ def main(argv):
                         help="kml names and/or xpaths of Folder(s) or Placemark(s) to append with main input kml **")
     parser.add_argument("--debug", action="store_true", default=False,
                         help="output debug information for developers")
+    parser.add_argument("--error-exit-status", action="store", default=1, type=int,
+                        help="Exit status to use in cases of unrecoverable errors")
 
     args = parser.parse_args(argv)
 
@@ -120,7 +138,7 @@ def main(argv):
     except kmlutil.KMLError, e:
         if options.reraise_errors:
             raise
-        sys.exit(1)
+        sys.exit(options.error_exit_status)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
