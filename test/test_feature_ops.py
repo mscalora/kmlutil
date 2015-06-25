@@ -6,8 +6,7 @@ from utils4test import *
 from scripttest import TestFileEnvironment
 from lxml import objectify, etree as lxml_et
 
-env = TestFileEnvironment('../scratch', cwd='..')
-
+env = TestFileEnvironment('scratch', cwd='.')
 
 class TestFromCommandLine(unittest.TestCase):
 
@@ -53,6 +52,7 @@ class TestFromCommandLine(unittest.TestCase):
 
     def test_delete_by_xpath(self):
         env.clear()
+
         result = env.run('kmlutil test-data/0-test-misc.kml --tree --delete \'//kml:Folder/*[kml:Point]|//*[kml:LineString and kml:name[contains(text(), "Map")]]\'', expect_stderr=True)
 
         self.assertRegexpMatches(result.stderr, ur'Deleteing 3 item', 'Three feature should have been deleted')
