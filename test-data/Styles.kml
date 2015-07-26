@@ -1,0 +1,105 @@
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document>
+    <name>Wasatch Trails</name>
+    <open>1</open>
+    <snippet>Created 12/07/12 00:30:10</snippet>
+    <LookAt>
+      <longitude>-111.7237986823152</longitude>
+      <latitude>40.63085014503093</latitude>
+      <altitude>0</altitude>
+      <heading>-0.01985245914903934</heading>
+      <tilt>0</tilt>
+      <range>5124.243159824659</range>
+      <gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+    </LookAt>
+    <Style id="lineStyle315">
+      <LineStyle>
+        <color>ff0080ff</color>
+        <width>4</width>
+      </LineStyle>
+    </Style>
+    <StyleMap id="lineStyle302189024">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#lineStyle3021890</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#lineStyle302189060</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="lineStyle302189060">
+      <LineStyle>
+        <color>ff0080ff</color>
+        <width>4</width>
+      </LineStyle>
+    </Style>
+    <Style id="lineStyle3021890">
+      <LineStyle>
+        <color>ff0080ff</color>
+        <width>4</width>
+      </LineStyle>
+    </Style>
+	<Style id="sh_ylw-pushpin3">
+      <IconStyle>
+        <scale>1.3</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+        </Icon>
+        <hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+      <LineStyle>
+        <color>ff0080ff</color>
+        <width>4</width>
+      </LineStyle>
+    </Style>
+    <StyleMap id="msn_ylw-pushpin4">
+      <Pair>
+        <key>normal</key>
+        <styleUrl>#sn_ylw-pushpin2</styleUrl>
+      </Pair>
+      <Pair>
+        <key>highlight</key>
+        <styleUrl>#sh_ylw-pushpin3</styleUrl>
+      </Pair>
+    </StyleMap>
+    <Style id="sn_ylw-pushpin2">
+      <IconStyle>
+        <scale>1.1</scale>
+        <Icon>
+          <href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+        </Icon>
+        <hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+      </IconStyle>
+      <LineStyle>
+        <color>ff0080ff</color>
+        <width>4</width>
+      </LineStyle>
+    </Style>
+    
+    <Placemark>
+      <name>Pole Canyon Trail</name>
+      <styleUrl>#msn_ylw-pushpin4</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+				-111.6137810666337,40.29060167919093,0 -111.6137868837818,40.29060660575957,0 -111.6136886598572,40.29061316238527,0
+		</coordinates>
+      </LineString>
+    </Placemark>
+   	<Folder>
+		<name>Both</name>
+		<open>1</open>
+		<Placemark>
+		  <name>Path</name>
+		  <styleUrl>#lineStyle302189024</styleUrl>
+		  <LineString>
+			<tessellate>1</tessellate>
+			<coordinates>
+					-111.6194023876777,40.42100283839184,0 -111.6193684942068,40.42093166565571,0 -111.6192452171363,40.42083472518761,0 -111.6190144798229,40.42059874355617,0 -111.6187266907115,40.42042341088806,0 -111.6185446658625,40.42013425192935,0 -111.618448,40.419903,0 -111.6185125064036,40.41979476283577,0 -111.6185884933875,40.41950007371401,0 -111.6183154603526,40.41936460594273,0 -111.6180791200899,40.41922666489384,0 -111.6180549378698,40.41914466426718,0 -111.6179689562446,40.41895791709199,0 -111.6177650942249,40.41886894290538,0 -111.617624010531,40.41883316731736,0 -111.6174946286749,40.41871480028426,0 -111.617400085642,40.41858690003217,0 -111.6172499119821,40.41830477227425,0 -111.6171778013113,40.41811152764533,0 -111.6171135673855,40.41788675172823,0 -111.6169938665235,40.4176964786967,0 
+				</coordinates>
+		  </LineString>
+		</Placemark>
+    </Folder>
+  </Document>
+</kml>

@@ -6,7 +6,7 @@ from utils4test import *
 from scripttest import TestFileEnvironment
 from lxml import objectify, etree as lxml_et
 
-env = TestFileEnvironment('../scratch', cwd='..')
+env = TestFileEnvironment('scratch', cwd='.')
 
 
 class TestFromCommandLine(unittest.TestCase):

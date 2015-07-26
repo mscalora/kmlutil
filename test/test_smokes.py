@@ -8,7 +8,7 @@ from scripttest import TestFileEnvironment
 from xml.etree import ElementTree as et
 from lxml import objectify, etree as lxml_et
 
-env = TestFileEnvironment('../scratch', cwd='..')
+env = TestFileEnvironment('scratch', cwd='.')
 
 
 class TestFromCommandLine(unittest.TestCase):
